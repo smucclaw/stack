@@ -474,9 +474,9 @@ warnUnsupportedCompiler ghcVersion = do
         logWarn "For more information, see: https://github.com/commercialhaskell/stack/issues/648"
         logWarn ""
         pure True
-    | ghcVersion >= mkVersion [9, 1] -> do
+    | ghcVersion >= mkVersion [9, 3] -> do
         logWarn $
-          "Stack has not been tested with GHC versions above 9.0, and using " <>
+          "Stack has not been tested with GHC versions above 9.3, and using " <>
           fromString (versionString ghcVersion) <>
           ", this may fail"
         pure True
@@ -501,9 +501,9 @@ warnUnsupportedCompilerCabal cp didWarn = do
         logWarn "This invocation will most likely fail."
         logWarn "To fix this, either use an older version of Stack or a newer resolver"
         logWarn "Acceptable resolvers: lts-3.0/nightly-2015-05-05 or later"
-    | cabalVersion >= mkVersion [3, 5] ->
+    | cabalVersion >= mkVersion [3, 7] ->
         logWarn $
-          "Stack has not been tested with Cabal versions above 3.4, but version " <>
+          "Stack has not been tested with Cabal versions above 3.6, but version " <>
           fromString (versionString cabalVersion) <>
           " was found, this may fail"
     | otherwise -> pure ()
