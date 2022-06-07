@@ -32,6 +32,9 @@ import           Data.List (find, isPrefixOf, unzip)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
+#if MIN_VERSION_Cabal(3,6,0)
+import Distribution.Utils.Path (getSymbolicPath)
+#endif
 #if MIN_VERSION_Cabal(3,4,0)
 import           Distribution.CabalSpecVersion
 #endif
@@ -411,7 +414,11 @@ generateBuildInfoOpts BioInput {..} =
               , [ biCabalDir
                 | null (hsSourceDirs biBuildInfo)
                 ]
+#if MIN_VERSION_Cabal(3,6,0)
+              , mapMaybe toIncludeDir (map getSymbolicPath (hsSourceDirs biBuildInfo))
+#else
               , mapMaybe toIncludeDir (hsSourceDirs biBuildInfo)
+#endif
               , [ componentAutogen ]
               , maybeToList (packageAutogenDir biCabalVersion biDistDir)
               , [ componentOutputDir biComponentName biDistDir ]
@@ -808,7 +815,11 @@ resolveComponentFiles
     -> [DotCabalDescriptor]
     -> RIO Ctx (Map ModuleName (Path Abs File), [DotCabalPath], [PackageWarning])
 resolveComponentFiles component build names = do
+#if MIN_VERSION_Cabal(3,6,0)
+    dirs <- mapMaybeM resolveDirOrWarn (map getSymbolicPath (hsSourceDirs build))
+#else
     dirs <- mapMaybeM resolveDirOrWarn (hsSourceDirs build)
+#endif
     dir <- asks (parent . ctxFile)
     agdirs <- autogenDirs
     (modules,files,warnings) <-
