@@ -65,7 +65,18 @@ jobs:
             choco install nsis-unicode -y
           fi
 
-          stack clean
+          if [[ "${{ matrix.release-args }}" == "alpine" ]]
+          then
+              touch ~/.stack/config.yaml
+              cat > ~/.stack/config.yaml <<EOF
+              extra-include-dirs:
+              - /usr/include
+              extra-lib-dirs:
+              - /lib
+              - /usr/lib
+          EOF
+          fi
+
           # Do this in the same step as installing deps to get relevant env var modifications
           stack etc/scripts/release.hs check ${{ matrix.release-args }}
 
