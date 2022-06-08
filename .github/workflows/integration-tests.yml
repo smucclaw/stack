@@ -65,7 +65,7 @@ jobs:
             choco install nsis-unicode -y
           fi
 
-          if [[ "${{ matrix.release-args }}" == "alpine" ]]
+          if [[ "${{ matrix.release-args }}" == "--alpine" ]]
           then
               touch ~/.stack/config.yaml
               cat > ~/.stack/config.yaml <<EOF
