@@ -92,9 +92,7 @@ jobs:
               extra-lib-dirs:
               - /lib
               - /usr/lib
-              EOF
-          else
-             echo "else case"
+EOF
           fi
           stack test ${{ matrix.stack-args }} --haddock --no-haddock-deps --ghc-options="-Werror -O0" --copy-bins --local-bin-path bin
 
