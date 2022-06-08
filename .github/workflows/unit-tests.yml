@@ -82,7 +82,7 @@ jobs:
         run: |
           set -ex
           stack upgrade || curl -sSL https://get.haskellstack.org/ | sh -s - -f
-          if [[ "${{ matrix.os }}" == "alpine" ]]
+          if [[ "${{ matrix.extra-suffix }}" == "alpine" ]]
           then
               # Disable optimization for alpine build. Likely a bug with GHC alpine buids as it results in segmentation fault error without it.
               stack test ${{ matrix.stack-args }} --haddock --no-haddock-deps --ghc-options="-Werror -O0" --copy-bins --local-bin-path bin
