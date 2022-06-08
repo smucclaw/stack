@@ -81,6 +81,15 @@ jobs:
       - shell: bash
         run: |
           set -ex
+
+          cat > ~/.stack/config.yaml <<EOF
+          extra-include-dirs:
+          - /usr/include
+          extra-lib-dirs:
+          - /lib
+          - /usr/lib
+          EOF
+
           stack upgrade || curl -sSL https://get.haskellstack.org/ | sh -s - -f
           if [[ "${{ matrix.extra-suffix }}" == "alpine" ]]
           then
