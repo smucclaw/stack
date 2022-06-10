@@ -1045,4 +1045,4 @@ breakEnd p = spanEnd (not . p)
 -- Nothing if the list did not end with the suffix given, or Just the list
 -- before the suffix, if it does.
 stripSuffix :: Eq a => [a] -> [a] -> Maybe [a]
-stripSuffix xs ys = fmap reverse $ stripPrefix (reverse xs) (reverse ys)
+stripSuffix xs ys = reverse <$> stripPrefix (reverse xs) (reverse ys)
