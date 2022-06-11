@@ -12,6 +12,9 @@ nix:
   packages:
     - zlib
     - unzip
+extra-deps:
+- process-1.6.12.0
+
 flags:
   stack:
     developer-mode: true
