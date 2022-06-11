@@ -13,8 +13,8 @@ nix:
     - zlib
     - unzip
 extra-deps:
-- process-1.6.12.0
-
+- process-1.6.14.0
+- Cabal-3.6.3.0@sha256:ff97c442b0c679c1c9876acd15f73ac4f602b973c45bde42b43ec28265ee48f4,12459
 flags:
   stack:
     developer-mode: true
