@@ -17,7 +17,7 @@ import qualified RIO.Map                  as Map
 import           RIO.Process
 import qualified RIO.Set                  as Set
 import qualified RIO.Text                 as T
-import           System.Environment       (lookupEnv, getExecutablePath)
+import           System.Environment       (lookupEnv, getExecutablePath, getEnv)
 import           System.Info (os)
 import           System.PosixCompat.Files
 
@@ -88,6 +88,15 @@ exeExt = if isWindows then ".exe" else ""
 isWindows :: Bool
 isWindows = os == "mingw32"
 
+newPath :: FilePath -> String -> (String, String)
+newPath ghcPath pathEnv = if isWindows
+                          then ("PATH", pathEnv)
+                          else ("PATH", addGHCPath)
+ where
+   addGHCPath :: String
+   addGHCPath = pathEnv <> ":" <> ghcPath
+
+
 runApp :: Options -> RIO App a -> RIO SimpleApp a
 runApp options inner = do
   let speed = fromMaybe Normal $ optSpeed options
@@ -97,6 +106,9 @@ runApp options inner = do
   testsRoot <- canonicalizePath $ srcDir </> "test/integration"
   libdir <- canonicalizePath $ testsRoot </> "lib"
   myPath <- liftIO getExecutablePath
+  pathEnv <- liftIO $ getEnv "PATH"
+  let ghcPathDir = takeDirectory runghc
+      newGhcPath = newPath ghcPathDir pathEnv
 
   stack <- canonicalizePath $ takeDirectory myPath </> "stack" ++ exeExt
   logInfo $ "Using stack located at " <> fromString stack
@@ -117,6 +129,7 @@ runApp options inner = do
   let modifyEnvCommon
         = Map.insert "SRC_DIR" (fromString srcDir)
         . Map.insert "STACK_EXE" (fromString stack)
+        . Map.insert "PATH"  (fromString $ snd newGhcPath)
         . Map.delete "GHC_PACKAGE_PATH"
         . Map.insert "STACK_TEST_SPEED"
             (case speed of
