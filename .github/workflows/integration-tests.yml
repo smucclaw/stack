@@ -77,6 +77,7 @@ jobs:
           EOF
           fi
 
+          export RIO_VERBOSE=1
           # Do this in the same step as installing deps to get relevant env var modifications
           stack etc/scripts/release.hs check ${{ matrix.release-args }}
 
