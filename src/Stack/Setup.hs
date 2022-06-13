@@ -797,9 +797,9 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
     globaldb <-
       case eglobaldb of
         Left e -> do
-          logWarn "Parsing global DB from GHC info failed"
-          logWarn $ displayShow e
-          logWarn "Asking ghc-pkg directly"
+          logInfo "Parsing global DB from GHC info failed"
+          logInfo $ displayShow e
+          logInfo "Asking ghc-pkg directly"
           withProcessContext menv $ getGlobalDB pkg
         Right x -> pure x
 
