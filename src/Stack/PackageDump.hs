@@ -61,6 +61,8 @@ ghcPkgCmdArgs
     -> ConduitM Text Void (RIO env) a
     -> RIO env a
 ghcPkgCmdArgs pkgexe@(GhcPkgExe pkgPath) cmd mpkgDbs sink = do
+    logInfo "ghcPkgCmdArgs (1)"
+    logInfo $ "args: " <> displayShow args
     case reverse mpkgDbs of
         (pkgDb:_) -> createDatabase pkgexe pkgDb -- TODO maybe use some retry logic instead?
         _ -> return ()
