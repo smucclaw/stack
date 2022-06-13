@@ -67,7 +67,8 @@ sinkProcessStderrStdout
   -> ConduitM ByteString Void (RIO env) e -- ^ Sink for stderr
   -> ConduitM ByteString Void (RIO env) o -- ^ Sink for stdout
   -> RIO env (e,o)
-sinkProcessStderrStdout name args sinkStderr sinkStdout =
+sinkProcessStderrStdout name args sinkStderr sinkStdout = do
+  logInfo "sinkProcessStderrStdout (1)"
   proc name args $ \pc0 -> do
     let pc = setStdout createSource
            $ setStderr createSource
@@ -92,7 +93,7 @@ sinkProcessStdout
     -> ConduitM ByteString Void (RIO env) a -- ^ Sink for stdout
     -> RIO env a
 sinkProcessStdout name args sinkStdout = do
-  logInfo "sinkProcessStdout"
+  logInfo "sinkProcessStdout (1)"
   proc name args $ \pc ->
    withLoggedProcess_ (setStdin closed pc) $ \p -> runConcurrently
     $ Concurrently (runConduit $ getStderr p .| CL.sinkNull)
