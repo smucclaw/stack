@@ -66,6 +66,7 @@ ghcPkgCmdArgs pkgexe@(GhcPkgExe pkgPath) cmd mpkgDbs sink = do
     case reverse mpkgDbs of
         (pkgDb:_) -> createDatabase pkgexe pkgDb -- TODO maybe use some retry logic instead?
         _ -> return ()
+    logInfo "ghcPkgCmdArgs (2)"
     sinkProcessStdout (toFilePath pkgPath) args sink'
   where
     args = concat

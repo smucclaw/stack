@@ -75,6 +75,7 @@ createDatabase
   -> Path Abs Dir
   -> RIO env ()
 createDatabase (GhcPkgExe pkgPath) db = do
+    logInfo "createDatabase (1)"
     exists <- doesFileExist (db </> relFilePackageCache)
     unless exists $ do
         -- ghc-pkg requires that the database directory does not exist
