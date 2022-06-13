@@ -67,7 +67,8 @@ ghcPkgCmdArgs pkgexe@(GhcPkgExe pkgPath) cmd mpkgDbs sink = do
         (pkgDb:_) -> createDatabase pkgexe pkgDb -- TODO maybe use some retry logic instead?
         _ -> return ()
     logInfo "ghcPkgCmdArgs (2)"
-    sinkProcessStderrStdout (toFilePath pkgPath) args CL.sinkNull sink'
+    (_,res) <- sinkProcessStderrStdout (toFilePath pkgPath) args CL.sinkNull sink'
+    pure res
   where
     args = concat
         [ case mpkgDbs of
