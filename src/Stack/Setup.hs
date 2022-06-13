@@ -802,7 +802,6 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
           logInfo $ displayShow e
           logInfo "Asking ghc-pkg directly"
           withProcessContext menv $ getGlobalDB pkg
-          logInfo "Check reached"
         Right x -> pure x
 
     globalDump <- withProcessContext menv $ globalsFromDump pkg
