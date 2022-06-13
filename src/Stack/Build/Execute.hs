@@ -304,9 +304,7 @@ getSetupExe setupHs setupShimHs tmpdir = do
             logInfo $ "tmpdir: " <> (displayShow $ toFilePath tmpdir)
             logInfo $ "compilerPath: " <> (displayShow $ toFilePath compilerPath)
             logInfo $ "args: " <> (displayShow args)
-            withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
-              let pc = setStdout (useHandleOpen stdout) pc0
-              runProcess_ pc)
+            withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args runProcess_)
                 `catch` \ece -> do
                     logInfo "catch thrown"
                     throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
