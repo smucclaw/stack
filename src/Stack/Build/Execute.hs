@@ -67,7 +67,7 @@ import           Path.Extra (toFilePathNoTrailingSep, rejectMissingFile)
 import           Path.IO hiding (findExecutable, makeAbsolute, withSystemTempDir)
 import qualified RIO
 import           Stack.Build.Cache
-import RIO.Directory (doesDirectoryExist)
+import RIO.Directory (doesDirectoryExist, withCurrentDirectory)
 import           Stack.Build.Haddock
 import           Stack.Build.Installed
 import           Stack.Build.Source
@@ -316,8 +316,8 @@ getSetupExe setupHs setupShimHs tmpdir = do
                        exists2 <- doesDirectoryExist ho
                        logInfo "home dir"
                        logInfo $ displayShow exists2
-            -- withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
-            (proc (toFilePath compilerPath) args $ \pc0 -> do
+            withCurrentDirectory (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
+            -- (proc (toFilePath compilerPath) args $ \pc0 -> do
               let pc = setStdout (useHandleOpen stderr) pc0
               runProcess_ pc)
                 `catch` \ece ->
