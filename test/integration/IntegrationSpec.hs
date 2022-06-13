@@ -233,12 +233,16 @@ test testDir = withDir $ \dir -> withHome $ do
       hClose logh
 
       case ec of
-        ExitSuccess -> logInfo "Success!"
+        ExitSuccess -> do
+          logInfo "Success, dumping log\n\n"
+          withSourceFile logfp $ \src ->
+            runConduit $ src .| stderrC
+          logError $ "\n\nEnd of log for " <> fromString name
         _ -> do
           logError "Failure, dumping log\n\n"
           withSourceFile logfp $ \src ->
             runConduit $ src .| stderrC
-          logError $ "\n\nEnd of log for " <> fromString name
+          logInfo $ "\n\nEnd of log for " <> fromString name
       pure $ Map.singleton (fromString name) ec
   where
     name = takeFileName testDir
