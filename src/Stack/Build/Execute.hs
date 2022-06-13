@@ -301,10 +301,14 @@ getSetupExe setupHs setupShimHs tmpdir = do
                     ]
             compilerPath <- getCompilerPath
             logInfo "getSetupExe (8)"
+            logInfo $ "tmpdir: " <> (displayShow $ toFilePath tmpdir)
+            logInfo $ "compilerPath: " <> (displayShow $ toFilePath compilerPath)
+            logInfo $ "args: " <> (displayShow args)
             withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
               let pc = setStdout (useHandleOpen stderr) pc0
               runProcess_ pc)
-                `catch` \ece ->
+                `catch` \ece -> do
+                    logInfo "catch thrown"
                     throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
             logInfo "getSetupExe (9)"
             renameFile tmpExePath exePath
