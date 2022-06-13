@@ -308,6 +308,7 @@ getSetupExe setupHs setupShimHs tmpdir = do
             logInfo "ls tmpDir"
             exists <- doesDirectoryExist (toFilePath tmpdir)
             logInfo $ displayShow exists
+            (proc "env" [] runProcess_)
             withWorkingDir ("/Users/ec2-user") (proc (toFilePath compilerPath) args runProcess_)
                 `catch` \ece -> do
                     logInfo "catch thrown"
