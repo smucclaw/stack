@@ -620,17 +620,22 @@ ensureCompiler sopts getSetupInfo' = do
 
     let canUseCompiler cp
             | soptsSkipGhcCheck sopts = pure cp
-            | not $ isWanted $ cpCompilerVersion cp = throwString "Not the compiler version we want"
-            | cpArch cp /= expectedArch = throwString "Not the architecture we want"
+            | not $ isWanted $ cpCompilerVersion cp = do
+                                       logInfo "Not the compiler version we want"
+                                       throwString "Not the compiler version we want"
+            | cpArch cp /= expectedArch = do
+                                       logInfo "Not the architecture we want"
+                                       throwString "Not the architecture we want"
             | otherwise = pure cp
         isWanted = isWantedCompiler (soptsCompilerCheck sopts) (soptsWantedCompiler sopts)
 
     let checkCompiler :: Path Abs File -> RIO env (Maybe CompilerPaths)
         checkCompiler compiler = do
+          logInfo "checkCompiler"
           eres <- tryAny $ pathsFromCompiler wc CompilerBuildStandard False compiler >>= canUseCompiler
           case eres of
             Left e -> do
-              logDebug $ "Not using compiler at " <> displayShow (toFilePath compiler) <> ": " <> displayShow e
+              logInfo $ "Not using compiler at " <> displayShow (toFilePath compiler) <> ": " <> displayShow e
               pure Nothing
             Right cp -> pure $ Just cp
 
@@ -1078,6 +1083,7 @@ sourceSystemCompilers wanted = do
     fp <- resolveFile' $ addExe $ dir FP.</> name
     logInfo $ "filePath: " <> (displayShow fp)
     exists <- doesFileExist fp
+    logInfo $ "exists: " <> (displayShow exists)
     when exists $ yield fp
   where
     addExe
