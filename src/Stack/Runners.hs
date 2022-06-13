@@ -67,7 +67,8 @@ withEnvConfig
     -- ^ Action that uses the build config.  If Docker is enabled for builds,
     -- this will be run in a Docker container.
     -> RIO Config a
-withEnvConfig needTargets boptsCLI inner =
+withEnvConfig needTargets boptsCLI inner = do
+  logDebug "withEnvConfig (1)"
   withBuildConfig $ do
     envConfig <- setupEnv needTargets boptsCLI Nothing
     logDebug "Starting to execute command inside EnvConfig"

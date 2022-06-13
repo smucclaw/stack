@@ -199,8 +199,12 @@ setupEnv :: NeedTargets
          -> Maybe Text -- ^ Message to give user when necessary GHC is not available
          -> RIO BuildConfig EnvConfig
 setupEnv needTargets boptsCLI mResolveMissingGHC = do
+    logDebug "setupEnv (1)"
     config <- view configL
+    logInfo $ "useSystem: " <> displayShow (configSystemGHC config)
+    logInfo $ "installIfMissing: " <> displayShow (configInstallGHC config)
     bc <- view buildConfigL
+    logInfo $ "wantedCompiler: " <> displayShow (smwCompiler $ bcSMWanted bc)
     let stackYaml = bcStackYaml bc
     platform <- view platformL
     wcVersion <- view wantedCompilerVersionL
@@ -607,7 +611,9 @@ ensureCompiler
   -> Memoized SetupInfo
   -> RIO env (CompilerPaths, ExtraDirs)
 ensureCompiler sopts getSetupInfo' = do
+    logInfo "ensureCompiler (1)"
     let wanted = soptsWantedCompiler sopts
+    logInfo $ "wanted: " <> displayShow wanted
     wc <- either throwIO (pure . whichCompiler) $ wantedToActual wanted
 
     Platform expectedArch _ <- view platformL
@@ -637,6 +643,9 @@ ensureCompiler sopts getSetupInfo' = do
                   concatMapMC checkCompiler .|
                   await
             else return Nothing
+    logInfo $ "mcp: " <> (displayShow $ case mcp of
+                                          Nothing -> Nothing
+                                          Just cp -> Just $ cpCompiler cp)
     case mcp of
       Nothing -> ensureSandboxedCompiler sopts getSetupInfo'
       Just cp -> do

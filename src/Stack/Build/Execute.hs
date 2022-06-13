@@ -313,7 +313,8 @@ withExecuteEnv :: forall env a. HasEnvConfig env
                -> Maybe Int -- ^ largest package name, for nicer interleaved output
                -> (ExecuteEnv -> RIO env a)
                -> RIO env a
-withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPackages localPackages mlargestPackageName inner =
+withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPackages localPackages mlargestPackageName inner = do
+    logInfo "withExecuteEnv: (1)"
     createTempDirFunction stackProgName $ \tmpdir -> do
         configLock <- liftIO $ newMVar ()
         installLock <- liftIO $ newMVar ()
@@ -587,6 +588,7 @@ executePlan' :: HasEnvConfig env
              -> ExecuteEnv
              -> RIO env ()
 executePlan' installedMap0 targets plan ee@ExecuteEnv {..} = do
+    logInfo $ "executePlan' (1)"
     when (toCoverage $ boptsTestOpts eeBuildOpts) deleteHpcReports
     cv <- view actualCompilerVersionL
     case nonEmpty . Map.toList $ planUnregisterLocal plan of
