@@ -751,11 +751,14 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
                   else loop rest
           logDebug $ "Looking for executable(s): " <> displayShow toTry
           loop toTry
+    logInfo "pathsFromCompiler (2)"
     pkg <- fmap GhcPkgExe $ findHelper $ \case
                                Ghc -> ["ghc-pkg"]
+    logInfo "pathsFromCompiler (3)"
 
     menv0 <- view processContextL
     menv <- mkProcessContext (removeHaskellEnvVars (view envVarsL menv0))
+    logInfo "pathsFromCompiler (4)"
 
     interpreter <- findHelper $
                    \case
@@ -765,6 +768,7 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
                   Ghc -> ["haddock", "haddock-ghc"]
     infobs <- proc (toFilePath compiler) ["--info"]
             $ fmap (toStrictBytes . fst) . readProcess_
+    logInfo "pathsFromCompiler (5)"
     infotext <-
       case decodeUtf8' infobs of
         Left e -> throwString $ "GHC info is not valid UTF-8: " ++ show e
@@ -803,12 +807,15 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
           logInfo "Asking ghc-pkg directly"
           withProcessContext menv $ getGlobalDB pkg
         Right x -> pure x
+    logInfo "pathsFromCompiler (6)"
 
     globalDump <- withProcessContext menv $ globalsFromDump pkg
+    logInfo "pathsFromCompiler (7)"
     cabalPkgVer <-
       case Map.lookup cabalPackageName globalDump of
         Nothing -> throwString $ "Cabal library not found in global package database for " ++ toFilePath compiler
         Just dp -> pure $ pkgVersion $ dpPackageIdent dp
+    logInfo "pathsFromCompiler (8)"
 
     return CompilerPaths
       { cpBuild = compilerBuild
