@@ -316,11 +316,12 @@ withExecuteEnv :: forall env a. HasEnvConfig env
 withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPackages localPackages mlargestPackageName inner = do
     logInfo "withExecuteEnv: (1)"
     createTempDirFunction stackProgName $ \tmpdir -> do
+        logInfo "withExecuteEnv-ctdf: (1)"
         configLock <- liftIO $ newMVar ()
         installLock <- liftIO $ newMVar ()
         idMap <- liftIO $ newTVarIO Map.empty
         config <- view configL
-
+        logInfo "withExecuteEnv-ctdf: (2)"
         customBuiltRef <- newIORef Set.empty
 
         -- Create files for simple setup and setup shim, if necessary
@@ -328,15 +329,19 @@ withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPacka
                 view stackRootL config </>
                 relDirSetupExeSrc
         ensureDir setupSrcDir
+        logInfo "withExecuteEnv-ctdf: (3)"
         setupFileName <- parseRelFile ("setup-" ++ simpleSetupHash ++ ".hs")
         let setupHs = setupSrcDir </> setupFileName
         setupHsExists <- doesFileExist setupHs
+        logInfo "withExecuteEnv-ctdf: (4)"
         unless setupHsExists $ writeBinaryFileAtomic setupHs simpleSetupCode
         setupShimFileName <- parseRelFile ("setup-shim-" ++ simpleSetupHash ++ ".hs")
         let setupShimHs = setupSrcDir </> setupShimFileName
         setupShimHsExists <- doesFileExist setupShimHs
         unless setupShimHsExists $ writeBinaryFileAtomic setupShimHs setupGhciShimCode
+        logInfo "withExecuteEnv-ctdf: (5)"
         setupExe <- getSetupExe setupHs setupShimHs tmpdir
+        logInfo "withExecuteEnv-ctdf: (6)"
 
         cabalPkgVer <- view cabalVersionL
         globalDB <- view $ compilerPathsL.to cpGlobalDB
@@ -345,6 +350,7 @@ withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPacka
         logFilesTChan <- liftIO $ atomically newTChan
         let totalWanted = length $ filter lpWanted locals
         pathEnvVar <- liftIO $ maybe mempty T.pack <$> lookupEnv "PATH"
+        logInfo "withExecuteEnv-ctdf: (7)"
         inner ExecuteEnv
             { eeBuildOpts = bopts
             , eeBuildOptsCLI = boptsCli
