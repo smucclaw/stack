@@ -288,7 +288,9 @@ getSetupExe setupHs setupShimHs tmpdir = do
             logInfo "getSetupExe (5)"
             tmpExePath <- fmap (setupDir </>) $ parseRelFile $ "tmp-" ++ exeNameS
             tmpOutputPath <- fmap (setupDir </>) $ parseRelFile $ "tmp-" ++ outputNameS
+            logInfo "getSetupExe (6)"
             ensureDir setupDir
+            logInfo "getSetupExe (7)"
             let args = buildSetupArgs ++
                     [ "-package"
                     , "Cabal-" ++ cabalVersionString
@@ -298,12 +300,15 @@ getSetupExe setupHs setupShimHs tmpdir = do
                     , toFilePath tmpOutputPath
                     ]
             compilerPath <- getCompilerPath
+            logInfo "getSetupExe (8)"
             withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
               let pc = setStdout (useHandleOpen stderr) pc0
               runProcess_ pc)
                 `catch` \ece ->
                     throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
+            logInfo "getSetupExe (9)"
             renameFile tmpExePath exePath
+            logInfo "getSetupExe (10)"
             return $ Just exePath
 
 -- | Execute a function that takes an 'ExecuteEnv'.
