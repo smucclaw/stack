@@ -305,11 +305,18 @@ getSetupExe setupHs setupShimHs tmpdir = do
             logInfo $ "tmpdir: " <> (displayShow $ toFilePath tmpdir)
             logInfo $ "compilerPath: " <> (displayShow $ toFilePath compilerPath)
             logInfo $ "args: " <> (displayShow args)
-            logInfo "ls tmpDir"
-            exists <- doesDirectoryExist (toFilePath tmpdir)
-            logInfo $ displayShow exists
             (proc "env" [] runProcess_)
-            withWorkingDir ("/Users/ec2-user") (proc (toFilePath compilerPath) args runProcess_)
+            logInfo "ls tmpDir"
+            exists1 <- doesDirectoryExist (toFilePath tmpdir)
+            logInfo $ displayShow exists1
+            mhome <- liftIO $ lookupEnv "HOME"
+            case mhome of
+              Nothing -> pure ()
+              Just ho -> do
+                       exists2 <- doesDirectoryExist ho
+                       logInfo "home dir"
+                       logInfo $ displayShow exists2
+            withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args runProcess_)
                 `catch` \ece -> do
                     logInfo "catch thrown"
                     throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []

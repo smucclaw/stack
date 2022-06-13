@@ -226,10 +226,8 @@ test testDir = withDir $ \dir -> withHome $ do
               ]
            $ runProcess
            . setStdin closed
-           . setStdout closed
-           . setStderr closed
-           -- . setStdout (useHandleOpen logh)
-           -- . setStderr (useHandleOpen logh)
+           . setStdout (useHandleOpen logh)
+           . setStderr (useHandleOpen logh)
       hClose logh
 
       case ec of
