@@ -323,6 +323,7 @@ getSetupExe setupHs setupShimHs tmpdir = do
                 `catch` \ece ->
                     throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
             logInfo "getSetupExe (9)"
+            (proc "env" [] runProcess_)
             renameFile tmpExePath exePath
             logInfo "getSetupExe (10)"
             return $ Just exePath
