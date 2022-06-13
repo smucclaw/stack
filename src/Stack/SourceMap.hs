@@ -134,10 +134,13 @@ globalsFromDump pkgexe = do
     let pkgConduit =
             conduitDumpPackage .|
             CL.foldMap (\dp -> Map.singleton (dpGhcPkgId dp) dp)
-        toGlobals ds =
+        -- toGlobals :: Map GhcPkgId DumpPackage -> Map PackageName DumpedGlobalPackage
+        toGlobals ds = do
           Map.fromList $ map (pkgName . dpPackageIdent &&& id) $ Map.elems ds
     logInfo "globalsFromDump (2)"
-    toGlobals <$> ghcPkgDump pkgexe [] pkgConduit
+    oldMap <- ghcPkgDump pkgexe [] pkgConduit
+    logInfo "globalsFromDump (3)"
+    pure $ toGlobals oldMap
 
 globalsFromHints ::
        HasConfig env
