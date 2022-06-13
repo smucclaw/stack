@@ -91,9 +91,10 @@ sinkProcessStdout
     -> [String] -- ^ Command line arguments
     -> ConduitM ByteString Void (RIO env) a -- ^ Sink for stdout
     -> RIO env a
-sinkProcessStdout name args sinkStdout =
+sinkProcessStdout name args sinkStdout = do
+  logInfo "sinkProcessStdout"
   proc name args $ \pc ->
-  withLoggedProcess_ (setStdin closed pc) $ \p -> runConcurrently
+   withLoggedProcess_ (setStdin closed pc) $ \p -> runConcurrently
     $ Concurrently (runConduit $ getStderr p .| CL.sinkNull)
    *> Concurrently (runConduit $ getStdout p .| sinkStdout)
 
