@@ -316,14 +316,12 @@ getSetupExe setupHs setupShimHs tmpdir = do
                        exists2 <- doesDirectoryExist ho
                        logInfo "home dir"
                        logInfo $ displayShow exists2
-            withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args runProcess_)
-                `catch` \ece -> do
-                    logInfo "catch thrown"
+            -- withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
+            (proc (toFilePath compilerPath) args $ \pc0 -> do
+              let pc = setStdout (useHandleOpen stderr) pc0
+              runProcess_ pc)
+                `catch` \ece ->
                     throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
-            -- withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args runProcess_)
-            --     `catch` \ece -> do
-            --         logInfo "catch thrown"
-            --         throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
             logInfo "getSetupExe (9)"
             renameFile tmpExePath exePath
             logInfo "getSetupExe (10)"
