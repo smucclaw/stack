@@ -395,7 +395,7 @@ withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPacka
 
     createTempDirFunction
         | boptsKeepTmpFiles bopts = withKeepSystemTempDir
-        | otherwise = withSystemTempDir
+        | otherwise = withKeepSystemTempDir -- withSystemTempDir
 
     dumpLogs :: TChan (Path Abs Dir, Path Abs File) -> Int -> RIO env ()
     dumpLogs chan totalWanted = do
