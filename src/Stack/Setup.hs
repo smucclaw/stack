@@ -1076,6 +1076,7 @@ sourceSystemCompilers wanted = do
       WCGhcGit{} -> pure [] -- only use sandboxed versions
   for_ names $ \name -> for_ searchPath $ \dir -> do
     fp <- resolveFile' $ addExe $ dir FP.</> name
+    logInfo $ "filePath: " <> (displayShow fp)
     exists <- doesFileExist fp
     when exists $ yield fp
   where
