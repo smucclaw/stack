@@ -305,9 +305,6 @@ getSetupExe setupHs setupShimHs tmpdir = do
             logInfo $ "compilerPath: " <> (displayShow $ toFilePath compilerPath)
             logInfo $ "args: " <> (displayShow args)
             logInfo "ls tmpDir"
-            (proc "ls" [toFilePath tmpdir] runProcess_)
-            logInfo "ls arsgs"
-            (proc "ls" [args !! 11] runProcess_)
             (proc (toFilePath compilerPath) args runProcess_)
                 `catch` \ece -> do
                     logInfo "catch thrown"
@@ -403,7 +400,7 @@ withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPacka
 
     createTempDirFunction
         | boptsKeepTmpFiles bopts = withKeepSystemTempDir
-        | otherwise = withKeepSystemTempDir -- withSystemTempDir
+        | otherwise = withSystemTempDir
 
     dumpLogs :: TChan (Path Abs Dir, Path Abs File) -> Int -> RIO env ()
     dumpLogs chan totalWanted = do
