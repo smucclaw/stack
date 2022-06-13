@@ -130,11 +130,13 @@ globalsFromDump ::
     => GhcPkgExe
     -> RIO env (Map PackageName DumpedGlobalPackage)
 globalsFromDump pkgexe = do
+    logInfo "globalsFromDump (1)"
     let pkgConduit =
             conduitDumpPackage .|
             CL.foldMap (\dp -> Map.singleton (dpGhcPkgId dp) dp)
         toGlobals ds =
           Map.fromList $ map (pkgName . dpPackageIdent &&& id) $ Map.elems ds
+    logInfo "globalsFromDump (2)"
     toGlobals <$> ghcPkgDump pkgexe [] pkgConduit
 
 globalsFromHints ::
