@@ -242,17 +242,20 @@ simpleSetupHash =
     encodeUtf8Builder (T.pack (unwords buildSetupArgs)) <> setupGhciShimCode <> simpleSetupCode
 
 -- | Get a compiled Setup exe
-getSetupExe :: HasEnvConfig env
+getSetupExe :: (HasEnvConfig env, HasLogFunc env)
             => Path Abs File -- ^ Setup.hs input file
             -> Path Abs File -- ^ SetupShim.hs input file
             -> Path Abs Dir -- ^ temporary directory
             -> RIO env (Maybe (Path Abs File))
 getSetupExe setupHs setupShimHs tmpdir = do
+    logInfo "getSetupExe (1)"
     wc <- view $ actualCompilerVersionL.whichCompilerL
     platformDir <- platformGhcRelDir
+    logInfo "getSetupExe (2)"
     config <- view configL
     cabalVersionString <- view $ cabalVersionL.to versionString
     actualCompilerVersionString <- view $ actualCompilerVersionL.to compilerVersionString
+    logInfo "getSetupExe (3)"
     platform <- view platformL
     let baseNameS = concat
             [ "Cabal-simple_"
@@ -277,10 +280,12 @@ getSetupExe setupHs setupShimHs tmpdir = do
     exePath <- (setupDir </>) <$> parseRelFile exeNameS
 
     exists <- liftIO $ D.doesFileExist $ toFilePath exePath
+    logInfo "getSetupExe (4)"
 
     if exists
         then return $ Just exePath
         else do
+            logInfo "getSetupExe (5)"
             tmpExePath <- fmap (setupDir </>) $ parseRelFile $ "tmp-" ++ exeNameS
             tmpOutputPath <- fmap (setupDir </>) $ parseRelFile $ "tmp-" ++ outputNameS
             ensureDir setupDir
