@@ -728,6 +728,7 @@ pathsFromCompiler
   -> Path Abs File -- ^ executable filepath
   -> RIO env CompilerPaths
 pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny onErr $ do
+    logInfo "pathsFromCompiler (1)"
     let dir = toFilePath $ parent compiler
         suffixNoVersion
           | osIsWindows = ".exe"
@@ -801,6 +802,7 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
           logInfo $ displayShow e
           logInfo "Asking ghc-pkg directly"
           withProcessContext menv $ getGlobalDB pkg
+          logInfo "Check reached"
         Right x -> pure x
 
     globalDump <- withProcessContext menv $ globalsFromDump pkg
