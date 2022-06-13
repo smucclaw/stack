@@ -335,6 +335,7 @@ withExecuteEnv :: forall env a. HasEnvConfig env
                -> RIO env a
 withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPackages localPackages mlargestPackageName inner = do
     logInfo "withExecuteEnv: (1)"
+    logInfo $ "boptsKeepTmpFiles bopts: " <> (displayShow $ boptsKeepTmpFiles bopts)
     createTempDirFunction stackProgName $ \tmpdir -> do
         logInfo "withExecuteEnv-ctdf: (1)"
         configLock <- liftIO $ newMVar ()
