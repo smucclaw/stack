@@ -67,7 +67,7 @@ import           Path.Extra (toFilePathNoTrailingSep, rejectMissingFile)
 import           Path.IO hiding (findExecutable, makeAbsolute, withSystemTempDir)
 import qualified RIO
 import           Stack.Build.Cache
-import RIO.Director (doesDirectoryExist)
+import RIO.Directory (doesDirectoryExist)
 import           Stack.Build.Haddock
 import           Stack.Build.Installed
 import           Stack.Build.Source
