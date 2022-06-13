@@ -308,14 +308,14 @@ getSetupExe setupHs setupShimHs tmpdir = do
             (proc "ls" [toFilePath tmpdir] runProcess_)
             logInfo "ls arsgs"
             (proc "ls" [args !! 11] runProcess_)
-            (proc (toFilePath compilerPath) args runProcess_)
-                `catch` \ece -> do
-                    logInfo "catch thrown"
-                    throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
-            -- withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args runProcess_)
+            -- (proc (toFilePath compilerPath) args runProcess_)
             --     `catch` \ece -> do
             --         logInfo "catch thrown"
             --         throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
+            withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args runProcess_)
+                `catch` \ece -> do
+                    logInfo "catch thrown"
+                    throwM $ SetupHsBuildFailure (eceExitCode ece) Nothing compilerPath args Nothing []
             logInfo "getSetupExe (9)"
             renameFile tmpExePath exePath
             logInfo "getSetupExe (10)"
