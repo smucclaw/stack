@@ -222,8 +222,9 @@ test testDir = withDir $ \dir -> withHome $ do
     withSystemTempFile (name <.> "log") $ \logfp logh -> do
       ec <- withWorkingDir dir
           $ proc runghc
-              [
-               "-i" ++ libDir
+              [ "-clear-package-db"
+              , "-global-package-db"
+              , "-i" ++ libDir
               , mainFile
               ]
            $ runProcess
