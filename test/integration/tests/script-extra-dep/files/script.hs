@@ -1,4 +1,4 @@
-#!/usr/bin/env stack
+#!/Users/ec2-user/stack/.local/bin/stack
 -- stack --resolver ghc-9.2.3 script --extra-dep acme-missiles-0.3@rev:0 --extra-dep stm-2.5.0.2@rev:0
 import Acme.Missiles
 
