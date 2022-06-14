@@ -61,6 +61,7 @@ instance Show StackScriptException where
 -- | Run a Stack Script
 scriptCmd :: ScriptOpts -> RIO Runner ()
 scriptCmd opts = do
+    logInfo "scriptCmd (1)"
     -- Some warnings in case the user somehow tries to set a
     -- stack.yaml location. Note that in this functions we use
     -- logError instead of logWarn because, when using the
@@ -73,6 +74,7 @@ scriptCmd opts = do
       SYLGlobalProject -> logError "Ignoring SYLGlobalProject for script command"
       SYLDefault -> return ()
       SYLNoProject _ -> assert False (return ())
+    logInfo "scriptCmd (2)"
 
     file <- resolveFile' $ soFile opts
     let scriptDir = parent file
@@ -82,6 +84,7 @@ scriptCmd opts = do
                 }
             , globalStackYaml = SYLNoProject $ soScriptExtraDeps opts
             }
+    logInfo "scriptCmd (3)"
 
     case soShouldRun opts of
       YesRun -> pure ()
@@ -91,6 +94,7 @@ scriptCmd opts = do
           SEInterpret -> throwString "--no-run requires either --compile or --optimize"
           SECompile -> pure ()
           SEOptimize -> pure ()
+    logInfo "scriptCmd (4)"
 
     -- Optimization: if we're compiling, and the executable is newer
     -- than the source file, run it immediately.
@@ -177,7 +181,7 @@ scriptCmd opts = do
             -- exception, the standard output we did capture will be reported
             -- to the user.
             compilerExeName <- view $ compilerPathsL.to cpCompiler.to toFilePath
-            Dir.withCurrentDirectory (toFilePath scriptDir) $ proc
+            withWorkingDir (toFilePath scriptDir) $ proc
               compilerExeName
               (ghcArgs ++ [toFilePath file])
               (void . readProcessStdout_)
