@@ -144,6 +144,7 @@ runApp options inner = do
       let app = App
             { appSimpleApp = simpleApp
             , appRunghc = runghc
+            , appStack = stack
             , appLibDir = libdir
             , appSetupHome = id
             , appTestDirs = testDirs
@@ -167,6 +168,7 @@ runApp options inner = do
           app = App
             { appSimpleApp = simpleApp
             , appRunghc = runghc
+            , appStack = stack
             , appLibDir = libdir
             , appSetupHome = \inner' -> withSystemTempDirectory "home" $ \newHome -> do
                 let newStackRoot = newHome </> ".stack"
@@ -189,6 +191,7 @@ hasTest dir = doesFileExist $ dir </> "Main.hs"
 data App = App
   { appRunghc :: !FilePath
   , appLibDir :: !FilePath
+  , appStack :: !FilePath
   , appSetupHome :: !(forall a. RIO App a -> RIO App a)
   , appSimpleApp :: !SimpleApp
   , appTestDirs :: !(Set FilePath)
@@ -211,8 +214,8 @@ test :: FilePath -- ^ test dir
 test testDir = withDir $ \dir -> withHome $ do
     runghc <- asks appRunghc
     libDir <- asks appLibDir
+    stackExe <- ask appStack
     let mainFile = testDir </> "Main.hs"
-    stackExe <- liftIO $ getEnv "STACK_EXE"
 
     copyTree (testDir </> "files") dir
 
