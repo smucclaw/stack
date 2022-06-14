@@ -1,6 +1,6 @@
 {- stack script
     --resolver nightly-2022-06-10
-    --install-ghc
+    --system-ghc
     --ghc-options -Wall
     --package Cabal
     --package aeson
