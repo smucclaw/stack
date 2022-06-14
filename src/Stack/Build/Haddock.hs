@@ -27,6 +27,7 @@ import           Path.Extra
 import           Path.IO
 import           RIO.List (intercalate)
 import           RIO.PrettyPrint
+import RIO.Directory (withCurrentDirectory)
 import           Stack.Constants
 import           Stack.PackageDump
 import           Stack.Types.Build
