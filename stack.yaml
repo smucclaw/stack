@@ -20,8 +20,7 @@ ghc-options:
    "$locals": -fhide-source-paths
 
 extra-deps:
-- git: https://github.com/bgamari/process.git
-  commit: f5e10c4a391c7f9c5347858bda1b173a56b393a7
+- process-1.6.9.0
 
 drop-packages:
 # See https://github.com/commercialhaskell/stack/pull/4712
