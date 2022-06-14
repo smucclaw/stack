@@ -27,7 +27,6 @@ import           Path.Extra
 import           Path.IO
 import           RIO.List (intercalate)
 import           RIO.PrettyPrint
-import RIO.Directory (withCurrentDirectory)
 import           Stack.Constants
 import           Stack.PackageDump
 import           Stack.Types.Build
@@ -205,7 +204,7 @@ generateHaddockIndex descr bco dumpPackages docRelFP destDir = do
                   fromString (toFilePath destIndexFile)
                 liftIO (mapM_ copyPkgDocs interfaceOpts)
                 haddockExeName <- view $ compilerPathsL.to (toFilePath . cpHaddock)
-                withCurrentDirectory (toFilePath destDir) $ readProcessNull
+                withWorkingDir (toFilePath destDir) $ readProcessNull
                     haddockExeName
                     (map (("--optghc=-package-db=" ++ ) . toFilePathNoTrailingSep)
                         [bcoSnapDB bco, bcoLocalDB bco] ++
