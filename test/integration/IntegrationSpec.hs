@@ -221,12 +221,8 @@ test testDir = withDir $ \dir -> withHome $ do
 
     withSystemTempFile (name <.> "log") $ \logfp logh -> do
       ec <- withCurrentDirectory dir
-          $ withModifyEnvVars (Map.insert "TEST_DIR" $ fromString testDir)
-          $ proc stackExe
-              ["exec"
-              , "--"
-              , "runghc"
-              , "-clear-package-db"
+          $ proc runghc
+              [ "-clear-package-db"
               , "-global-package-db"
               , "-i" ++ libDir
               , mainFile
