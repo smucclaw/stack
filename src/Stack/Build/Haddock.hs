@@ -36,6 +36,7 @@ import           Stack.Types.Package
 import qualified System.FilePath as FP
 import           RIO.Process
 import           Web.Browser (openBrowser)
+import           System.Info (os)
 
 openHaddocksInBrowser
     :: HasTerm env
@@ -204,10 +205,13 @@ generateHaddockIndex descr bco dumpPackages docRelFP destDir = do
                   fromString (toFilePath destIndexFile)
                 liftIO (mapM_ copyPkgDocs interfaceOpts)
                 haddockExeName <- view $ compilerPathsL.to (toFilePath . cpHaddock)
-                -- The following line should be un-commented and replaced
+
+                -- Sibi: The following line workaround should be removed
                 -- once we have a resolution here: https://github.com/haskell/process/issues/247
-                -- withWorkingDir (toFilePath destDir) $ readProcessNull
-                readProcessNull
+                let macOSWorkaround = if os == "darwin"
+                                      then id
+                                      else withWorkingDir (toFilePath destDir)
+                macOSWorkaround $ readProcessNull
                     haddockExeName
                     (map (("--optghc=-package-db=" ++ ) . toFilePathNoTrailingSep)
                         [bcoSnapDB bco, bcoLocalDB bco] ++
