@@ -177,7 +177,7 @@ scriptCmd opts = do
             -- exception, the standard output we did capture will be reported
             -- to the user.
             compilerExeName <- view $ compilerPathsL.to cpCompiler.to toFilePath
-            withWorkingDir (toFilePath scriptDir) $ proc
+            Dir.withCurrentDirectory (toFilePath scriptDir) $ proc
               compilerExeName
               (ghcArgs ++ [toFilePath file])
               (void . readProcessStdout_)
