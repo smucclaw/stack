@@ -316,7 +316,7 @@ getSetupExe setupHs setupShimHs tmpdir = do
                        exists2 <- doesDirectoryExist ho
                        logInfo "home dir"
                        logInfo $ displayShow exists2
-            withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
+            withCurrentdirectory (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
             -- (proc (toFilePath compilerPath) args $ \pc0 -> do
               let pc = setStdout (useHandleOpen stderr) pc0
               runProcess_ pc)
