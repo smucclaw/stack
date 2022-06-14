@@ -204,7 +204,7 @@ generateHaddockIndex descr bco dumpPackages docRelFP destDir = do
                   fromString (toFilePath destIndexFile)
                 liftIO (mapM_ copyPkgDocs interfaceOpts)
                 haddockExeName <- view $ compilerPathsL.to (toFilePath . cpHaddock)
-                withWorkingDir (toFilePath destDir) $ readProcessNull
+                withCurrentDirectory (toFilePath destDir) $ readProcessNull
                     haddockExeName
                     (map (("--optghc=-package-db=" ++ ) . toFilePathNoTrailingSep)
                         [bcoSnapDB bco, bcoLocalDB bco] ++
