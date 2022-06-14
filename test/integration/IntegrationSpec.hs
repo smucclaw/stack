@@ -212,14 +212,18 @@ test testDir = withDir $ \dir -> withHome $ do
     runghc <- asks appRunghc
     libDir <- asks appLibDir
     let mainFile = testDir </> "Main.hs"
+    stackExe <- liftIO $ getEnv "STACK_EXE"
 
     copyTree (testDir </> "files") dir
 
     withSystemTempFile (name <.> "log") $ \logfp logh -> do
       ec <- withCurrentDirectory dir
           $ withModifyEnvVars (Map.insert "TEST_DIR" $ fromString testDir)
-          $ proc runghc
-              [ "-clear-package-db"
+          $ proc stackExe
+              ["exec"
+              , "--"
+              , "runghc"
+              , "-clear-package-db"
               , "-global-package-db"
               , "-i" ++ libDir
               , mainFile
