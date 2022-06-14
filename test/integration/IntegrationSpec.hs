@@ -220,11 +220,11 @@ test testDir = withDir $ \dir -> withHome $ do
     copyTree (testDir </> "files") dir
 
     withSystemTempFile (name <.> "log") $ \logfp logh -> do
-      ec <- withCurrentDirectory dir
+      ec <- withWorkingDir dir
           $ proc runghc
-              [ "--ghc-arg=-clear-package-db"
-              , "--ghc-arg=-global-package-db"
-              , "--ghc-arg=-i" ++ libDir
+              [ "-clear-package-db"
+              , "-global-package-db"
+              , "-i" ++ libDir
               , mainFile
               ]
            $ runProcess
