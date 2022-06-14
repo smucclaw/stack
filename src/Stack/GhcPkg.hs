@@ -36,6 +36,7 @@ getGlobalDB
   => GhcPkgExe
   -> RIO env (Path Abs Dir)
 getGlobalDB pkgexe = do
+    logInfo "getGlobalDB (1)"
     logDebug "Getting global package database location"
     -- This seems like a strange way to get the global package database
     -- location, but I don't know of a better one
@@ -57,6 +58,7 @@ ghcPkg
   -> [String]
   -> RIO env (Either SomeException S8.ByteString)
 ghcPkg pkgexe@(GhcPkgExe pkgPath) pkgDbs args = do
+    logInfo "ghcPkg (1)"
     eres <- go
     case eres of
       Left _ -> do
@@ -119,6 +121,7 @@ findGhcPkgField
     -> Text
     -> RIO env (Maybe Text)
 findGhcPkgField pkgexe pkgDbs name field = do
+    logInfo "findGhcPkgField (1)"
     result <-
         ghcPkg
             pkgexe
