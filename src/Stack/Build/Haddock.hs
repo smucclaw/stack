@@ -204,7 +204,10 @@ generateHaddockIndex descr bco dumpPackages docRelFP destDir = do
                   fromString (toFilePath destIndexFile)
                 liftIO (mapM_ copyPkgDocs interfaceOpts)
                 haddockExeName <- view $ compilerPathsL.to (toFilePath . cpHaddock)
-                withWorkingDir (toFilePath destDir) $ readProcessNull
+                -- The following line should be un-commented and replaced
+                -- once we have a resolution here: https://github.com/haskell/process/issues/247
+                -- withWorkingDir (toFilePath destDir) $ readProcessNull
+                readProcessNull
                     haddockExeName
                     (map (("--optghc=-package-db=" ++ ) . toFilePathNoTrailingSep)
                         [bcoSnapDB bco, bcoLocalDB bco] ++

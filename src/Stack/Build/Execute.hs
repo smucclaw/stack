@@ -293,7 +293,11 @@ getSetupExe setupHs setupShimHs tmpdir = do
                     , toFilePath tmpOutputPath
                     ]
             compilerPath <- getCompilerPath
-            withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
+
+            -- The following line should be un-commented and replaced
+            -- once we have a resolution here: https://github.com/haskell/process/issues/247
+            -- withWorkingDir (toFilePath tmpdir) (proc (toFilePath compilerPath) args $ \pc0 -> do
+            (proc (toFilePath compilerPath) args $ \pc0 -> do
               let pc = setStdout (useHandleOpen stderr) pc0
               runProcess_ pc)
                 `catch` \ece ->
