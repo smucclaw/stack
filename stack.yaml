@@ -21,6 +21,7 @@ ghc-options:
 
 extra-deps:
 - process-1.6.9.0
+allow-newer: true
 
 drop-packages:
 # See https://github.com/commercialhaskell/stack/pull/4712
