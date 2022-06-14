@@ -214,7 +214,7 @@ test :: FilePath -- ^ test dir
 test testDir = withDir $ \dir -> withHome $ do
     runghc <- asks appRunghc
     libDir <- asks appLibDir
-    stackExe <- ask appStack
+    stackExe <- asks appStack
     let mainFile = testDir </> "Main.hs"
 
     copyTree (testDir </> "files") dir
