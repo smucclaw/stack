@@ -199,7 +199,7 @@ setupEnv :: NeedTargets
          -> Maybe Text -- ^ Message to give user when necessary GHC is not available
          -> RIO BuildConfig EnvConfig
 setupEnv needTargets boptsCLI mResolveMissingGHC = do
-    logDebug "setupEnv (1)"
+    logInfo "setupEnv (1)"
     config <- view configL
     logInfo $ "useSystem: " <> displayShow (configSystemGHC config)
     logInfo $ "installIfMissing: " <> displayShow (configInstallGHC config)
@@ -237,7 +237,7 @@ setupEnv needTargets boptsCLI mResolveMissingGHC = do
                     (view envVarsL menv0)
     menv <- mkProcessContext env
 
-    logDebug "Resolving package entries"
+    logInfo "Resolving package entries"
 
     (sourceMap, sourceMapHash) <- runWithGHC menv compilerPaths $ do
       smActual <- actualFromGhc (bcSMWanted bc) compilerVer
@@ -485,7 +485,7 @@ warnUnsupportedCompiler ghcVersion = do
           ", this may fail"
         pure True
     | otherwise -> do
-        logDebug "Asking for a supported GHC version"
+        logInfo "Asking for a supported GHC version"
         pure False
 
 -- | See <https://github.com/commercialhaskell/stack/issues/4246>
@@ -570,7 +570,7 @@ installGhcBindist sopts getSetupInfo' installed = do
                     (Just tool, False) -> [(tool, compilerBuild)]
                     _ -> [])
             possibleCompilers
-    logDebug $
+    logInfo $
       "Found already installed GHC builds: " <>
       mconcat (intersperse ", " (map (fromString . compilerBuildName . snd) existingCompilers))
     case existingCompilers of
@@ -642,7 +642,7 @@ ensureCompiler sopts getSetupInfo' = do
     mcp <-
         if soptsUseSystem sopts
             then do
-                logDebug "Getting system compiler version"
+                logInfo "Getting system compiler version"
                 runConduit $
                   sourceSystemCompilers wanted .|
                   concatMapMC checkCompiler .|
@@ -668,7 +668,7 @@ ensureSandboxedCompiler sopts getSetupInfo' = do
     config <- view configL
     let localPrograms = configLocalPrograms config
     installed <- listInstalled localPrograms
-    logDebug $ "Installed tools: \n - " <> mconcat (intersperse "\n - " (map (fromString . toolString) installed))
+    logInfo $ "Installed tools: \n - " <> mconcat (intersperse "\n - " (map (fromString . toolString) installed))
     (compilerTool, compilerBuild) <-
       case soptsWantedCompiler sopts of
        -- shall we build GHC from source?
@@ -749,7 +749,7 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
                 if exists
                   then pure guessedPath
                   else loop rest
-          logDebug $ "Looking for executable(s): " <> displayShow toTry
+          logInfo $ "Looking for executable(s): " <> displayShow toTry
           loop toTry
     logInfo "pathsFromCompiler (2)"
     pkg <- fmap GhcPkgExe $ findHelper $ \case
@@ -843,7 +843,7 @@ pathsFromCompiler wc compilerBuild isSandboxed compiler = withCache $ handleAny 
             pure Nothing
           Right x -> pure x
       case mres of
-        Just cp -> cp <$ logDebug "Loaded compiler information from cache"
+        Just cp -> cp <$ logInfo "Loaded compiler information from cache"
         Nothing -> do
           cp <- inner
           saveCompilerPaths cp `catchAny` \e ->
@@ -927,7 +927,7 @@ buildGhcFromSource getSetupInfo' installed (CompilerRepository url) commitId fla
                  (installer si)
                return (compilerTool, CompilerBuildStandard)
            _ -> do
-              forM_ files (logDebug . fromString . (" - " ++) . toFilePath)
+              forM_ files (logInfo . fromString . (" - " ++) . toFilePath)
               error "Can't find hadrian generated bindist"
 
 
@@ -979,7 +979,7 @@ getGhcBuilds = do
                         Left _ -> []
                     checkLib lib
                         | libT `elem` firstWords = do
-                            logDebug ("Found shared library " <> libD <> " in 'ldconfig -p' output")
+                            logInfo ("Found shared library " <> libD <> " in 'ldconfig -p' output")
                             return True
                         | osIsWindows =
                             -- Cannot parse /usr/lib on Windows
@@ -991,9 +991,9 @@ getGhcBuilds = do
                         -- to scan for shared libs, but this works for our particular cases.
                             matches <- filterM (doesFileExist .(</> lib)) usrLibDirs
                             case matches of
-                                [] -> logDebug ("Did not find shared library " <> libD)
+                                [] -> logInfo ("Did not find shared library " <> libD)
                                     >> return False
-                                (path:_) -> logDebug ("Found shared library " <> libD
+                                (path:_) -> logInfo ("Found shared library " <> libD
                                         <> " in " <> fromString (Path.toFilePath path))
                                     >> return True
                       where
@@ -1027,7 +1027,7 @@ getGhcBuilds = do
                 useBuilds [CompilerBuildSpecialized releaseStr]
             _ -> useBuilds [CompilerBuildStandard]
     useBuilds builds = do
-        logDebug $
+        logInfo $
           "Potential GHC builds: " <>
           mconcat (intersperse ", " (map (fromString . compilerBuildName) builds))
         return builds
@@ -1243,7 +1243,7 @@ downloadAndInstallPossibleCompilers possibleCompilers si wanted versionCheck mbi
     go [] Nothing = throwM UnsupportedSetupConfiguration
     go [] (Just e) = throwM e
     go (b:bs) e = do
-        logDebug $ "Trying to setup GHC build: " <> fromString (compilerBuildName b)
+        logInfo $ "Trying to setup GHC build: " <> fromString (compilerBuildName b)
         er <- try $ downloadAndInstallCompiler b si wanted versionCheck mbindistURL
         case er of
             Left e'@(UnknownCompilerVersion ks' w' vs') ->
@@ -1369,7 +1369,7 @@ installGHCPosix downloadInfo _ archiveFile archiveType tempDir destDir = do
     platform <- view platformL
     menv0 <- view processContextL
     menv <- mkProcessContext (removeHaskellEnvVars (view envVarsL menv0))
-    logDebug $ "menv = " <> displayShow (view envVarsL menv)
+    logInfo $ "menv = " <> displayShow (view envVarsL menv)
     (zipTool', compOpt) <-
         case archiveType of
             TarXz -> return ("xz", 'J')
@@ -1387,14 +1387,14 @@ installGHCPosix downloadInfo _ archiveFile archiveType tempDir destDir = do
         <*> (checkDependency "gmake" <|> checkDependency "make")
         <*> tarDep
 
-    logDebug $ "ziptool: " <> fromString zipTool
-    logDebug $ "make: " <> fromString makeTool
-    logDebug $ "tar: " <> fromString tarTool
+    logInfo $ "ziptool: " <> fromString zipTool
+    logInfo $ "make: " <> fromString makeTool
+    logInfo $ "tar: " <> fromString tarTool
 
     let runStep step wd env cmd args = do
           menv' <- modifyEnvVars menv (Map.union env)
           let logLines lvl = CB.lines .| CL.mapM_ (lvl . displayBytesUtf8)
-              logStdout = logLines logDebug
+              logStdout = logLines logInfo
               logStderr = logLines logError
           void $ withWorkingDir (toFilePath wd) $
                 withProcessContext menv' $
@@ -1425,7 +1425,7 @@ installGHCPosix downloadInfo _ archiveFile archiveType tempDir destDir = do
       "Unpacking GHC into " <>
       fromString (toFilePath tempDir) <>
       " ..."
-    logDebug $ "Unpacking " <> fromString (toFilePath archiveFile)
+    logInfo $ "Unpacking " <> fromString (toFilePath archiveFile)
     runStep "unpacking" tempDir mempty tarTool [compOpt : "xf", toFilePath archiveFile]
 
     dir <- expectSingleUnpackedDir archiveFile tempDir
@@ -1440,7 +1440,7 @@ installGHCPosix downloadInfo _ archiveFile archiveType tempDir destDir = do
     runStep "installing" dir mempty makeTool ["install"]
 
     logStickyDone $ "Installed GHC."
-    logDebug $ "GHC installed to " <> fromString (toFilePath destDir)
+    logInfo $ "GHC installed to " <> fromString (toFilePath destDir)
 
 -- | Check if given processes appear to be present, throwing an exception if
 -- missing.
@@ -1623,7 +1623,7 @@ chattyDownload label downloadInfo path = do
       "Preparing to download " <>
       RIO.display label <>
       " ..."
-    logDebug $
+    logInfo $
       "Downloading from " <>
       RIO.display url <>
       " to " <>
@@ -1636,7 +1636,7 @@ chattyDownload label downloadInfo path = do
       $ \(name, constr, getter) ->
         case getter downloadInfo of
           Just bs -> do
-            logDebug $
+            logInfo $
                 "Will check against " <>
                 name <>
                 " hash: " <>
@@ -1665,7 +1665,7 @@ sanityCheck ghc = withSystemTempDir "stack-sanity-check" $ \dir -> do
         [ "import Distribution.Simple" -- ensure Cabal library is present
         , "main = putStrLn \"Hello World\""
         ]
-    logDebug $ "Performing a sanity check on: " <> fromString (toFilePath ghc)
+    logInfo $ "Performing a sanity check on: " <> fromString (toFilePath ghc)
     eres <- withWorkingDir (toFilePath dir) $ proc (toFilePath ghc)
         [ fp
         , "-no-user-package-db"
@@ -1865,7 +1865,7 @@ downloadStackReleaseInfo Nothing Nothing Nothing = do
 
         -- Try out different URLs. If we've exhausted all of them, fall back to GitHub.
         loop [] = do
-          logDebug "Could not get binary from haskellstack.org, trying GitHub"
+          logInfo "Could not get binary from haskellstack.org, trying GitHub"
           downloadStackReleaseInfoGithub Nothing Nothing Nothing
 
         -- Try the next URL
@@ -1877,23 +1877,23 @@ downloadStackReleaseInfo Nothing Nothing Nothing = do
           -- Look for a redirect. We're looking for a standard GitHub releases
           -- URL where we can extract version information from.
           case getResponseHeader "location" res of
-            [] -> logDebug "No location header found, continuing" *> loop urls
+            [] -> logInfo "No location header found, continuing" *> loop urls
             -- Exactly one location header.
             [locBS] ->
               case decodeUtf8' locBS of
-                Left e -> logDebug ("Invalid UTF8: " <> displayShow (locBS, e)) *> loop urls
+                Left e -> logInfo ("Invalid UTF8: " <> displayShow (locBS, e)) *> loop urls
                 Right loc ->
                   case extractVersion loc of
-                    Left s -> logDebug ("No version found: " <> displayShow (url, loc, s)) *> loop (loc:urls)
+                    Left s -> logInfo ("No version found: " <> displayShow (url, loc, s)) *> loop (loc:urls)
                     -- We found a valid URL, let's use it!
                     Right version -> do
                       let hso = HaskellStackOrg
                                   { hsoUrl = loc
                                   , hsoVersion = version
                                   }
-                      logDebug $ "Downloading from haskellstack.org: " <> displayShow hso
+                      logInfo $ "Downloading from haskellstack.org: " <> displayShow hso
                       pure $ SRIHaskellStackOrg hso
-            locs -> logDebug ("Multiple location headers found: " <> displayShow locs) *> loop urls
+            locs -> logInfo ("Multiple location headers found: " <> displayShow locs) *> loop urls
     loop urls0
 downloadStackReleaseInfo morg mrepo mver = downloadStackReleaseInfoGithub morg mrepo mver
 

@@ -140,9 +140,9 @@ getSnapshots :: HasConfig env => RIO env Snapshots
 getSnapshots = do
     latestUrlText <- askLatestSnapshotUrl
     latestUrl <- parseUrlThrow (T.unpack latestUrlText)
-    logDebug $ "Downloading snapshot versions file from " <> display latestUrlText
+    logInfo $ "Downloading snapshot versions file from " <> display latestUrlText
     result <- httpJSON latestUrl
-    logDebug "Done downloading and parsing snapshot versions file"
+    logInfo "Done downloading and parsing snapshot versions file"
     return $ getResponseBody result
 
 -- | Turn an 'AbstractResolver' into a 'Resolver'.
@@ -536,7 +536,7 @@ withBuildConfig inner = do
     -- paths). We consider the current working directory to be the
     -- correct base. Let's calculate the mresolver first.
     mresolver <- forM (configResolver config) $ \aresolver -> do
-      logDebug ("Using resolver: " <> display aresolver <> " specified on command line")
+      logInfo ("Using resolver: " <> display aresolver <> " specified on command line")
       makeConcreteResolver aresolver
 
     (project', stackYamlFP) <- case configProject config of
@@ -550,7 +550,7 @@ withBuildConfig inner = do
               Just _ -> getEmptyProject mresolver extraDeps
           return (p, configUserConfigPath config)
       PCGlobalProject -> do
-            logDebug "Run from outside a project, using implicit global project config"
+            logInfo "Run from outside a project, using implicit global project config"
             destDir <- getImplicitGlobalProjectDir config
             let dest :: Path Abs File
                 dest = destDir </> stackDotYaml
@@ -565,7 +565,7 @@ withBuildConfig inner = do
                    when (view terminalL config) $
                        case configResolver config of
                            Nothing ->
-                               logDebug $
+                               logInfo $
                                  "Using resolver: " <>
                                  display (projectResolver project) <>
                                  " from implicit global project's config file: " <>
@@ -662,7 +662,7 @@ fillProjectWanted stackYamlFP config project locCache snapCompiler snapPackages 
     let gitRepos = mapMaybe (\case
                               (RPLImmutable (RPLIRepo repo rpm)) -> Just (repo, rpm)
                               _ -> Nothing) (projectDependencies project)
-    logDebug ("Prefetching git repos: " <> display (T.pack (show gitRepos)))
+    logInfo ("Prefetching git repos: " <> display (T.pack (show gitRepos)))
     fetchReposRaw gitRepos
 
     (deps0, mcompleted) <- fmap unzip . forM (projectDependencies project) $ \rpl -> do
@@ -890,7 +890,7 @@ getProjectConfig SYLDefault = do
     getStackDotYaml dir = do
         let fp = dir </> stackDotYaml
             fp' = toFilePath fp
-        logDebug $ "Checking for project config at: " <> fromString fp'
+        logInfo $ "Checking for project config at: " <> fromString fp'
         exists <- doesFileExist fp
         if exists
             then return $ Just fp
@@ -909,14 +909,14 @@ loadProjectConfig mstackYaml = do
     case mfp of
         PCProject fp -> do
             currDir <- getCurrentDir
-            logDebug $ "Loading project config file " <>
+            logInfo $ "Loading project config file " <>
                         fromString (maybe (toFilePath fp) toFilePath (stripProperPrefix currDir fp))
             PCProject <$> load fp
         PCGlobalProject -> do
-            logDebug "No project config file found, using defaults."
+            logInfo "No project config file found, using defaults."
             return PCGlobalProject
         PCNoProject extraDeps -> do
-            logDebug "Ignoring config files"
+            logInfo "Ignoring config files"
             return $ PCNoProject extraDeps
   where
     load fp = do

@@ -319,7 +319,7 @@ generateUnionReport :: HasEnvConfig env
                     -> RIO env (Maybe (Path Abs File))
 generateUnionReport report reportDir tixFiles = do
     (errs, tix) <- fmap (unionTixes . map removeExeModules) (mapMaybeM readTixOrLog tixFiles)
-    logDebug $ "Using the following tix files: " <> fromString (show tixFiles)
+    logInfo $ "Using the following tix files: " <> fromString (show tixFiles)
     unless (null errs) $ logWarn $
         "The following modules are left out of the " <>
         RIO.display report <>
@@ -456,14 +456,14 @@ findPackageFieldForBuiltPackage pkgDir pkgId internalLibs field = do
         then do
             -- here we don't need to handle internal libs
             path <- liftM (inplaceDir </>) $ parseRelFile (pkgIdStr ++ "-inplace.conf")
-            logDebug $ "Parsing config in Cabal < 1.24 location: " <> fromString (toFilePath path)
+            logInfo $ "Parsing config in Cabal < 1.24 location: " <> fromString (toFilePath path)
             exists <- doesFileExist path
             if exists then fmap (:[]) <$> extractField path else notFoundErr
         else do
             -- With Cabal-1.24, it's in a different location.
-            logDebug $ "Scanning " <> fromString (toFilePath inplaceDir) <> " for files matching " <> fromString pkgIdStr
+            logInfo $ "Scanning " <> fromString (toFilePath inplaceDir) <> " for files matching " <> fromString pkgIdStr
             (_, files) <- handleIO (const $ return ([], [])) $ listDir inplaceDir
-            logDebug $ displayShow files
+            logInfo $ displayShow files
             -- From all the files obtained from the scanning process above, we
             -- need to identify which are .conf files and then ensure that
             -- there is at most one .conf file for each library and internal
@@ -479,7 +479,7 @@ findPackageFieldForBuiltPackage pkgDir pkgId internalLibs field = do
                 stripHash n = let z = T.dropWhile (/= '-') n in if T.null z then "" else T.tail z
                 matchedComponents = map (\(n, f) -> (stripHash n, [f])) stripped
                 byComponents = Map.restrictKeys (Map.fromListWith (++) matchedComponents) $ Set.insert "" internalLibs
-            logDebug $ displayShow byComponents
+            logInfo $ displayShow byComponents
             if Map.null $ Map.filter (\fs -> length fs > 1) byComponents
             then case concat $ Map.elems byComponents of
                 [] -> notFoundErr

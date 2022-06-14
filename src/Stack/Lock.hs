@@ -107,11 +107,11 @@ lockCachedWanted stackFile resolver fillWanted = do
     locked <-
         if readLockFile
         then do
-            logDebug "Using package location completions from a lock file"
+            logInfo "Using package location completions from a lock file"
             unresolvedLocked <- loadYamlThrow parseJSON lockFile
             resolvePaths (Just $ parent stackFile) unresolvedLocked
         else do
-            logDebug "Not reading lock file"
+            logInfo "Not reading lock file"
             pure $ Locked [] []
     let toMap :: Ord a => [LockedLocation a b] -> Map a b
         toMap =  Map.fromList . map (\ll -> (llOriginal ll, llCompleted ll))

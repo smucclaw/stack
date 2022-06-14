@@ -37,7 +37,7 @@ getGlobalDB
   -> RIO env (Path Abs Dir)
 getGlobalDB pkgexe = do
     logInfo "getGlobalDB (1)"
-    logDebug "Getting global package database location"
+    logInfo "Getting global package database location"
     -- This seems like a strange way to get the global package database
     -- location, but I don't know of a better one
     bs <- ghcPkg pkgexe [] ["list", "--global"] >>= either throwIO return

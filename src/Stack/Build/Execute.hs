@@ -106,9 +106,9 @@ data ExecutableBuildStatus
 -- | Fetch the packages necessary for a build, for example in combination with a dry run.
 preFetch :: HasEnvConfig env => Plan -> RIO env ()
 preFetch plan
-    | Set.null pkgLocs = logDebug "Nothing to fetch"
+    | Set.null pkgLocs = logInfo "Nothing to fetch"
     | otherwise = do
-        logDebug $
+        logInfo $
             "Prefetching: " <>
             mconcat (intersperse ", " (RIO.display <$> Set.toList pkgLocs))
         fetchPackages pkgLocs
@@ -516,7 +516,7 @@ executePlan :: HasEnvConfig env
             -> Plan
             -> RIO env ()
 executePlan boptsCli baseConfigOpts locals globalPackages snapshotPackages localPackages installedMap targets plan = do
-    logDebug "Executing the build plan"
+    logInfo "Executing the build plan"
     bopts <- view buildOptsL
     withExecuteEnv bopts boptsCli baseConfigOpts locals globalPackages snapshotPackages localPackages mlargestPackageName
       (executePlan' installedMap targets plan)
@@ -1736,8 +1736,8 @@ singleBuild ac@ActionContext {..} ee@ExecuteEnv {..} task@Task {..} installedMap
             distDir <- distRelativeDir
             ddumpDir <- parseRelDir ddumpPath
 
-            logDebug $ fromString ("ddump-dir: " <> toFilePath ddumpDir)
-            logDebug $ fromString ("dist-dir: " <> toFilePath distDir)
+            logInfo $ fromString ("ddump-dir: " <> toFilePath ddumpDir)
+            logInfo $ fromString ("dist-dir: " <> toFilePath distDir)
 
             runConduitRes
               $ CF.sourceDirectoryDeep False (toFilePath distDir)

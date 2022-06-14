@@ -91,11 +91,11 @@ getCompilerVersion
 getCompilerVersion wc exe = do
     case wc of
         Ghc -> do
-            logDebug "Asking GHC for its version"
+            logInfo "Asking GHC for its version"
             bs <- fst <$> proc (toFilePath exe) ["--numeric-version"] readProcess_
             let (_, ghcVersion) = versionFromEnd $ BL.toStrict bs
             x <- ACGhc <$> parseVersionThrowing (T.unpack $ T.decodeUtf8 ghcVersion)
-            logDebug $ "GHC version is: " <> display x
+            logInfo $ "GHC version is: " <> display x
             return x
   where
     versionFromEnd = S8.spanEnd isValid . fst . S8.breakEnd isValid

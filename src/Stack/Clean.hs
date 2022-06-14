@@ -27,12 +27,12 @@ import           Stack.Types.SourceMap
 clean :: CleanOpts -> RIO Config ()
 clean cleanOpts = do
     toDelete <- withBuildConfig $ dirsToDelete cleanOpts
-    logDebug $ "Need to delete: " <> fromString (show (map toFilePath toDelete))
+    logInfo $ "Need to delete: " <> fromString (show (map toFilePath toDelete))
     failures <- mapM cleanDir toDelete
     when (or failures) exitFailure
   where
     cleanDir dir = do
-      logDebug $ "Deleting directory: " <> fromString (toFilePath dir)
+      logInfo $ "Deleting directory: " <> fromString (toFilePath dir)
       liftIO (ignoringAbsence (removeDirRecur dir) >> return False) `catchAny` \ex -> do
         logError $ "Exception while recursively deleting " <> fromString (toFilePath dir) <> "\n" <> displayShow ex
         logError "Perhaps you do not have permission to delete these files or they are in use?"

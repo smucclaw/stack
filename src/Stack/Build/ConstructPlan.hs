@@ -175,7 +175,7 @@ constructPlan :: forall env. HasEnvConfig env
               -> Bool
               -> RIO env Plan
 constructPlan baseConfigOpts0 localDumpPkgs loadPackage0 sourceMap installedMap initialBuildSteps = do
-    logDebug "Constructing the build plan"
+    logInfo "Constructing the build plan"
 
     when hasBaseInDeps $
       prettyWarn $ flow "You are trying to upgrade/downgrade base, which is almost certainly not what you really want. Please, consider using another GHC version if you need a certain version of base, or removing base from extra-deps. See more at https://github.com/commercialhaskell/stack/issues/3940." <> line

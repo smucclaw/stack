@@ -104,9 +104,9 @@ loadSourceMap smt boptsCli sma = do
         maybeProjectFlags (ACFByName name, fs) = Just (name, fs)
         maybeProjectFlags _ = Nothing
         globals = pruneGlobals (smaGlobal sma) (Map.keysSet deps)
-    logDebug "Checking flags"
+    logInfo "Checking flags"
     checkFlagsUsedThrowing packageCliFlags FSCommandLine project deps
-    logDebug "SourceMap constructed"
+    logInfo "SourceMap constructed"
     return
         SourceMap
         { smTargets = smt

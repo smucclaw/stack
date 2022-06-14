@@ -68,10 +68,10 @@ withEnvConfig
     -- this will be run in a Docker container.
     -> RIO Config a
 withEnvConfig needTargets boptsCLI inner = do
-  logDebug "withEnvConfig (1)"
+  logInfo "withEnvConfig (1)"
   withBuildConfig $ do
     envConfig <- setupEnv needTargets boptsCLI Nothing
-    logDebug "Starting to execute command inside EnvConfig"
+    logInfo "Starting to execute command inside EnvConfig"
     runRIO envConfig inner
 
 -- | If the settings justify it, should we reexec inside Docker or Nix?

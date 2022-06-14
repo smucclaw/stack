@@ -101,8 +101,8 @@ runShellAndExit = do
                            -- Using --run instead of --command so we cannot
                            -- end up in the nix-shell if stack build is Ctrl-C'd
      pathVar <- liftIO $ lookupEnv "PATH"
-     logDebug $ "PATH is: " <> displayShow pathVar
-     logDebug $
+     logInfo $ "PATH is: " <> displayShow pathVar
+     logInfo $
        "Using a nix-shell environment " <> (case mshellFile of
             Just path -> "from file: " <> fromString (toFilePath path)
             Nothing -> "with nix packages: " <> display (T.intercalate ", " pkgs))

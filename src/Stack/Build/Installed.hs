@@ -56,7 +56,7 @@ getInstalled :: HasEnvConfig env
                   , [DumpPackage] -- locally installed
                   )
 getInstalled {-opts-} installMap = do
-    logDebug "Finding out which packages are already installed"
+    logInfo "Finding out which packages are already installed"
     snapDBPath <- packageDatabaseDeps
     localDBPath <- packageDatabaseLocal
     extraDBPaths <- packageDatabaseExtra
@@ -142,7 +142,7 @@ processLoadResult :: HasLogFunc env
                   -> RIO env (Maybe LoadHelper)
 processLoadResult _ (Allowed, lh) = return (Just lh)
 processLoadResult mdb (reason, lh) = do
-    logDebug $
+    logInfo $
         "Ignoring package " <>
         fromString (packageNameString (fst (lhPair lh))) <>
         maybe mempty (\db -> ", from " <> displayShow db <> ",") mdb <>

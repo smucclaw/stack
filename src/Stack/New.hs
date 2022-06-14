@@ -149,7 +149,7 @@ loadTemplate name logIt = do
   where
     loadLocalFile :: Path b File -> (ByteString -> Either String Text) -> RIO env Text
     loadLocalFile path extract = do
-        logDebug ("Opening local template: \"" <> fromString (toFilePath path)
+        logInfo ("Opening local template: \"" <> fromString (toFilePath path)
                                                 <> "\"")
         exists <- doesFileExist path
         if exists

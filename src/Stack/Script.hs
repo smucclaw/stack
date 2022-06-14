@@ -149,9 +149,9 @@ scriptCmd opts = do
                           $ S8.unpack
                           $ S8.concat bss
             if Set.null $ Set.difference (Set.map packageNameString targetsSet) installed
-                then logDebug "All packages already installed"
+                then logInfo "All packages already installed"
                 else do
-                    logDebug "Missing packages, performing installation"
+                    logInfo "Missing packages, performing installation"
                     let targets = map (T.pack . packageNameString) $ Set.toList targetsSet
                     withNewLocalBuildTargets targets $ Stack.Build.build Nothing
 

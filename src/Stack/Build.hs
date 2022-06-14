@@ -166,7 +166,7 @@ instance Exception CabalVersionException
 warnIfExecutablesWithSameNameCouldBeOverwritten
     :: HasLogFunc env => [LocalPackage] -> Plan -> RIO env ()
 warnIfExecutablesWithSameNameCouldBeOverwritten locals plan = do
-    logDebug "Checking if we are going to build multiple executables with the same name"
+    logInfo "Checking if we are going to build multiple executables with the same name"
     forM_ (Map.toList warnings) $ \(exe,(toBuild,otherLocals)) -> do
         let exe_s
                 | length toBuild > 1 = "several executables with the same name:"
