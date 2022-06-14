@@ -216,7 +216,7 @@ test testDir = withDir $ \dir -> withHome $ do
     copyTree (testDir </> "files") dir
 
     withSystemTempFile (name <.> "log") $ \logfp logh -> do
-      ec <- withWorkingDir dir
+      ec <- withCurrentDirectory dir
           $ withModifyEnvVars (Map.insert "TEST_DIR" $ fromString testDir)
           $ proc runghc
               [ "-clear-package-db"
