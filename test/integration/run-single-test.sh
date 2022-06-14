@@ -8,7 +8,7 @@ export STACK_ROOT=$HOME/.stack
 unset GHC_PACKAGE_PATH
 
 DIR=$(pwd)
-STACK=$(stack exec which stack)
+STACK=/Users/ec2-user/.local/bin/stack
 
 export SRC_DIR=$DIR/../../
 export TEST_DIR=$DIR/tests/$1
