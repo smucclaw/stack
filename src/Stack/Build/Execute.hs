@@ -296,7 +296,11 @@ getSetupExe setupHs setupShimHs tmpdir = do
             compilerPath <- getCompilerPath
             -- Sibi: The following line workaround should be removed
             -- once we have a resolution here: https://github.com/haskell/process/issues/247
-            macOSWorkaround $ (proc (toFilePath compilerPath) args $ \pc0 -> do
+            let macOSWorkaround = if os == "darwin"
+                                  then id
+                                  else withWorkingDir (toFilePath tmpdir)
+
+            macOSWorkaround $ proc (toFilePath compilerPath) args (\pc0 -> do
               let pc = setStdout (useHandleOpen stderr) pc0
               runProcess_ pc)
                 `catch` \ece ->
