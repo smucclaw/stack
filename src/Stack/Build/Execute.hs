@@ -95,7 +95,6 @@ import           System.PosixCompat.Files (createLink, modificationTime, getFile
 import           RIO.PrettyPrint
 import           RIO.Process
 import           Pantry.Internal.Companion
-import           System.Info (os)
 
 -- | Has an executable been built or not?
 data ExecutableBuildStatus
@@ -294,13 +293,7 @@ getSetupExe setupHs setupShimHs tmpdir = do
                     , toFilePath tmpOutputPath
                     ]
             compilerPath <- getCompilerPath
-            -- Sibi: The following line workaround should be removed
-            -- once we have a resolution here: https://github.com/haskell/process/issues/247
-            let macOSWorkaround = if os == "darwin"
-                                  then id
-                                  else withWorkingDir (toFilePath tmpdir)
-
-            macOSWorkaround $ proc (toFilePath compilerPath) args (\pc0 -> do
+            withWorkingDir (toFilePath tmpdir) $ proc (toFilePath compilerPath) args (\pc0 -> do
               let pc = setStdout (useHandleOpen stderr) pc0
               runProcess_ pc)
                 `catch` \ece ->
