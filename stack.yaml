@@ -19,6 +19,10 @@ flags:
 ghc-options:
    "$locals": -fhide-source-paths
 
+extra-deps:
+- git: https://github.com/psibi/process.git
+  commit: df679380736c4fb77789897ec1786e1e8f3c5bae
+
 drop-packages:
 # See https://github.com/commercialhaskell/stack/pull/4712
 - cabal-install
