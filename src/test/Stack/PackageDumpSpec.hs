@@ -90,9 +90,7 @@ spec = do
                 , dpHaddockInterfaces = ["/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../../../share/doc/ghc-9.2.3/html/libraries/mtl/mtl.haddock"]
                 , dpHaddockHtml = Just "/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../../../share/doc/ghc-9.2.3/html/libraries/mtl"
                 , dpIsExposed = False
-                , dpExposedModules = [
-                   "Control.Monad.Cont Control.Monad.Cont.Class Control.Monad.Error"
-                  ]
+                , dpExposedModules = mempty
                 }
         it "ghc 7.8" $ do
             haskell2010:_ <-
