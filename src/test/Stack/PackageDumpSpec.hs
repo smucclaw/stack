@@ -82,14 +82,14 @@ spec = do
                 { dpGhcPkgId = ghcPkgId
                 , dpPackageIdent = packageIdent
                 , dpParentLibIdent = Nothing
-                , dpLicense = Just BSD3
+                , dpLicense = Just (UnknownLicense "BSD-3")
                 , dpLibDirs = ["/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../lib/x86_64-osx-ghc-9.2.3/mtl-2.2.2"]
                 , dpDepends = depends
-                , dpLibraries = ["mtl-2.2.2"]
+                , dpLibraries = ["HSmtl-2.2.2"]
                 , dpHasExposedModules = True
                 , dpHaddockInterfaces = ["/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../../../share/doc/ghc-9.2.3/html/libraries/mtl/mtl.haddock"]
                 , dpHaddockHtml = Just "/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../../../share/doc/ghc-9.2.3/html/libraries/mtl"
-                , dpIsExposed = False
+                , dpIsExposed = True
                 , dpExposedModules = mempty
                 }
         it "ghc 7.8" $ do
