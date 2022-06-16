@@ -63,6 +63,35 @@ spec = do
             ]
 
     describe "conduitDumpPackage" $ do
+        it "ghc 9.2.3 (macOS)" $ do
+            pretty:_ <-
+                  withSourceFile "test/package-dump/ghc-9.2.3-osx.txt" $ \src ->
+                  runConduit
+                $ src
+               .| decodeUtf8
+               .| conduitDumpPackage
+               .| CL.consume
+            ghcPkgId <- parseGhcPkgId "mtl-2.2.2"
+            packageIdent <- maybe (fail "Not parsable package id") return $
+              parsePackageIdentifier "mtl-2.2.2"
+            depends <- mapM parseGhcPkgId
+                [ "base-4.16.2.0"
+                , "transformers-0.5.6.2"
+                ]
+            pretty { dpExposedModules = mempty } `shouldBe` DumpPackage
+                { dpGhcPkgId = ghcPkgId
+                , dpPackageIdent = packageIdent
+                , dpParentLibIdent = Nothing
+                , dpLicense = Just BSD3
+                , dpLibDirs = ["/opt/ghc/7.8.4/lib/ghc-7.8.4/haskell2010-1.1.2.0"]
+                , dpDepends = depends
+                , dpLibraries = ["HShaskell2010-1.1.2.0"]
+                , dpHasExposedModules = True
+                , dpHaddockInterfaces = ["/opt/ghc/7.8.4/share/doc/ghc/html/libraries/haskell2010-1.1.2.0/haskell2010.haddock"]
+                , dpHaddockHtml = Just "/opt/ghc/7.8.4/share/doc/ghc/html/libraries/haskell2010-1.1.2.0"
+                , dpIsExposed = False
+                , dpExposedModules = mempty
+                }
         it "ghc 7.8" $ do
             haskell2010:_ <-
                   withSourceFile "test/package-dump/ghc-7.8.txt" $ \src ->
