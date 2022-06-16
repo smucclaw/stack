@@ -83,14 +83,16 @@ spec = do
                 , dpPackageIdent = packageIdent
                 , dpParentLibIdent = Nothing
                 , dpLicense = Just BSD3
-                , dpLibDirs = ["/opt/ghc/7.8.4/lib/ghc-7.8.4/haskell2010-1.1.2.0"]
+                , dpLibDirs = ["/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../lib/x86_64-osx-ghc-9.2.3/mtl-2.2.2"]
                 , dpDepends = depends
-                , dpLibraries = ["HShaskell2010-1.1.2.0"]
+                , dpLibraries = ["mtl-2.2.2"]
                 , dpHasExposedModules = True
-                , dpHaddockInterfaces = ["/opt/ghc/7.8.4/share/doc/ghc/html/libraries/haskell2010-1.1.2.0/haskell2010.haddock"]
-                , dpHaddockHtml = Just "/opt/ghc/7.8.4/share/doc/ghc/html/libraries/haskell2010-1.1.2.0"
+                , dpHaddockInterfaces = ["/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../../../share/doc/ghc-9.2.3/html/libraries/mtl/mtl.haddock"]
+                , dpHaddockHtml = Just "/Users/ec2-user/.stack/programs/x86_64-osx/ghc-9.2.3/lib/ghc-9.2.3/lib/../../../share/doc/ghc-9.2.3/html/libraries/mtl"
                 , dpIsExposed = False
-                , dpExposedModules = mempty
+                , dpExposedModules = [
+                   "Control.Monad.Cont Control.Monad.Cont.Class Control.Monad.Error"
+                  ]
                 }
         it "ghc 7.8" $ do
             haskell2010:_ <-
