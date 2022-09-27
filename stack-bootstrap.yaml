@@ -1,0 +1,36 @@
+# Stack has to be built with Cabal < 3.8.1.0 before it can build Stack with a
+# dependency on Cabal-3.8.1.0, due to
+# https://github.com/commercialhaskell/stack/pull/5886
+
+# GHC 9.2.5
+resolver: lts-20.0
+
+packages:
+- .
+
+extra-deps:
+- pantry-0.7.1@sha256:1ac1eb79ca866d22f9c59f0abfe3ff5cfd658693c9331d9052b7b29a1db23967,4099
+- fsnotify-0.4.1.0@sha256:44540beabea36aeeef930aa4d5f28091d431904bc9923b6ac4d358831c651235,2854
+
+allow-newer: true
+
+drop-packages:
+# See https://github.com/commercialhaskell/stack/pull/4712
+- cabal-install
+
+docker:
+  enable: false
+  repo: fpco/alpine-haskell-stack:9.2.5
+
+nix:
+  # --nix on the command-line to enable.
+  packages:
+  - zlib
+  - unzip
+
+flags:
+  stack:
+    developer-mode: true
+
+ghc-options:
+  "$locals": -fhide-source-paths

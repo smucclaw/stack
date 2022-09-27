@@ -32,7 +32,7 @@ RUN usermod -aG $GROUPID stack
 USER stack
 WORKDIR /home/stack
 
-COPY stack.yaml package.yaml /src/
+COPY stack-bootstrap.yaml stack.yaml package.yaml /src/
 
 USER root
 
@@ -41,6 +41,7 @@ RUN chown -R stack /src
 USER stack
 WORKDIR /src
 
+RUN stack --stack-yaml stack-bootstrap.yaml --local-bin-path /src install
 RUN stack build --only-snapshot --test
 RUN stack build shake
 

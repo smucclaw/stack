@@ -87,13 +87,16 @@ jobs:
         fi
 
         # Do this in the same step as installing deps to get relevant env var modifications
+        stack --stack-yaml stack-bootstrap.yaml --system-ghc install
         stack etc/scripts/release.hs check ${{ matrix.release-args }}
 
         set +ex
 
     - name: Build bindist
       shell: bash
-      run: stack etc/scripts/release.hs build ${{ matrix.release-args }}
+      run: |
+        stack --stack-yaml stack-bootstrap.yaml --system-ghc install
+        stack etc/scripts/release.hs build ${{ matrix.release-args }}
 
     - name: Upload bindist
       uses: actions/upload-artifact@v3
