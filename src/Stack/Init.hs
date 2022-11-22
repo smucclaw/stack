@@ -113,7 +113,16 @@ initProject currDir initOpts mresolver = do
     dirs <- mapM (resolveDir' . T.unpack) (searchDirs initOpts)
     let find  = findCabalDirs (includeSubDirs initOpts)
         dirs' = if null dirs then [currDir] else dirs
-    logInfo "Looking for .cabal or package.yaml files to use to init the project."
+    prettyInfo $
+           fillSep
+             [ flow "Looking for"
+             , style File "*.cabal"
+             , "or"
+             , style File "package.yaml"
+             , flow "files to use to initialise Stack's project-level YAML \
+                    \configuration."
+             ]
+        <> line
     cabaldirs <- Set.toList . Set.unions <$> mapM find dirs'
     (bundle, dupPkgs)  <- cabalPackagesCheck cabaldirs
     let makeRelDir dir =
@@ -182,36 +191,57 @@ initProject currDir initOpts mresolver = do
 
         ind t = T.unlines $ fmap ("    " <>) (T.lines t)
 
-    logInfo $ "Initialising configuration using resolver: " <> display snapshotLoc
-    logInfo $ "Total number of user packages considered: "
-               <> display (Map.size bundle + length dupPkgs)
+    prettyInfo $
+        fillSep
+          [ flow "Initialising Stack's project-level configuration using \
+                 \snapshot:"
+          , style Url (fromString $ show  snapshotLoc) <> "."
+          ]
+    prettyInfo $
+        fillSep
+          [ flow "Total number of user packages considered:"
+          , fromString $ show (Map.size bundle + length dupPkgs) <> "."
+          ]
 
     when (dupPkgs /= []) $ do
-        logWarn $ "Warning! Ignoring "
-                   <> displayShow (length dupPkgs)
-                   <> " duplicate packages:"
         rels <- mapM makeRel dupPkgs
-        logWarn $ display $ ind $ showItems rels
-
+        prettyWarn $
+               fillSep
+                 [ flow "Ignoring these"
+                 , fromString $ show (length dupPkgs)
+                 , flow "duplicate packages:"
+                 ]
+            <> line
+            <> bulletedList (map (style File . fromString) rels)
     when (Map.size ignored > 0) $ do
-        logWarn $ "Warning! Ignoring "
-                   <> displayShow (Map.size ignored)
-                   <> " packages due to dependency conflicts:"
         rels <- mapM makeRel (Map.elems (fmap fst ignored))
-        logWarn $ display $ ind $ showItems rels
-
+        prettyWarn $
+               fillSep
+                 [ "Ignoring these"
+                 , fromString $ show (Map.size ignored)
+                 , flow "packages due to dependency conflicts:"
+                 ]
+            <> line
+            <> bulletedList (map (style File . fromString) rels)
     when (Map.size extraDeps > 0) $ do
-        logWarn $ "Warning! " <> displayShow (Map.size extraDeps)
-                   <> " external dependencies were added."
-    logInfo $
-        (if exists then "Overwriting existing configuration file: "
-         else "Writing configuration to file: ")
-        <> fromString reldest
+        prettyWarn $
+            fillSep
+              [ fromString $ show (Map.size extraDeps)
+              , flow "external dependencies were added."
+              ]
+    prettyInfo $
+        fillSep
+          [ if exists
+              then flow "Overwriting existing configuration file:"
+              else flow "Writing configuration to file:"
+          , style File (fromString reldest) <> "."
+          ]
     writeBinaryFileAtomic dest
            $ renderStackYaml p
                (Map.elems $ fmap (makeRelDir . parent . fst) ignored)
                (map (makeRelDir . parent) dupPkgs)
-    logInfo "All done."
+    prettyInfo $
+        flow "Stack's project-level YAML configuration has been initialised."
 
 -- | Render a stack.yaml file with comments, see:
 -- https://github.com/commercialhaskell/stack/issues/226
@@ -417,7 +447,11 @@ getWorkingResolverPlan
        --   , Extra dependencies
        --   , Src packages actually considered)
 getWorkingResolverPlan initOpts pkgDirs0 snapCandidate snapLoc = do
-    logInfo $ "Selected resolver: " <> display snapLoc
+    prettyInfo $
+        fillSep
+          [ flow "Selected snapshot:"
+          , style Url (fromString $ show snapLoc) <> "."
+          ]
     go pkgDirs0
     where
         go pkgDirs = do
@@ -547,14 +581,29 @@ cabalPackagesCheck
           , [Path Abs File])
 cabalPackagesCheck cabaldirs = do
     when (null cabaldirs) $ do
-      logWarn "We didn't find any local package directories"
-      logWarn "You may want to create a package with \"stack new\" instead"
-      logWarn "Create an empty project for now"
-      logWarn "If this isn't what you want, please delete the generated \"stack.yaml\""
+        prettyWarn $
+             fillSep
+               [ flow "Stack did not find any local package directories. You \
+                      \may want to create a package with"
+               , style Shell "stack new"
+               , "instead."
+               ]
+          <> blankLine
+          <> fillSep
+               [ flow "Stack will create an empty project. If this is not what \
+                      \you want, please delete the generated"
+               , style File "stack.yaml"
+               , "file."
+               ]
+          <> line
 
     relpaths <- mapM prettyPath cabaldirs
-    logInfo "Using cabal packages:"
-    logInfo $ formatGroup relpaths
+    when (not $ null relpaths) $
+        prettyInfo $
+               flow "Using the Cabal packages:"
+            <> line
+            <> bulletedList (map (style File . fromString) relpaths)
+            <> line
 
     packages <- for cabaldirs $ \dir -> do
       (gpdio, _name, cabalfp) <- loadCabalFilePath (Just stackProgName') dir

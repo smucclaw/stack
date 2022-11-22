@@ -31,12 +31,14 @@ module Network.HTTP.StackClient
   , displayDigestAuthException
   , Request
   , RequestBody(RequestBodyBS, RequestBodyLBS)
-  , Response
-  , HttpException
+  , Response (..)
+  , HttpException (..)
+  , HttpExceptionContent (..)
   , hAccept
   , hContentLength
   , hContentMD5
   , methodPut
+  , notFound404
   , formDataBody
   , partFileRequestBody
   , partBS
@@ -70,16 +72,19 @@ import qualified Data.Text as T
 import           Data.Time.Clock
                    ( NominalDiffTime, diffUTCTime, getCurrentTime )
 import           Network.HTTP.Client
-                   ( Request, RequestBody (..), Response, parseRequest, getUri
-                   , path, checkResponse, parseUrlThrow
+                   ( HttpException (..), HttpExceptionContent (..), Request
+                   , RequestBody (..), Response (..), checkResponse, getUri
+                   , parseRequest, parseUrlThrow, path
                    )
 import           Network.HTTP.Simple
                    ( setRequestCheckStatus, setRequestMethod, setRequestBody
-                   , setRequestHeader, addRequestHeader, HttpException (..)
-                   , getResponseBody, getResponseStatusCode, getResponseHeaders
+                   , setRequestHeader, addRequestHeader, getResponseBody
+                   , getResponseStatusCode, getResponseHeaders
                    )
 import           Network.HTTP.Types
-                   ( hAccept, hContentLength, hContentMD5, methodPut )
+                   ( hAccept, hContentLength, hContentMD5, methodPut
+                   , notFound404
+                   )
 import           Network.HTTP.Conduit ( requestHeaders )
 import           Network.HTTP.Client.TLS
                    ( getGlobalManager, applyDigestAuth

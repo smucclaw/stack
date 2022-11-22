@@ -20,7 +20,7 @@ import           Control.Monad.Trans.Writer.Strict
 import           Data.Aeson as A
 import qualified Data.Aeson.KeyMap as KeyMap
 import qualified Data.ByteString.Base64 as B64
-import           Data.ByteString.Builder (lazyByteString)
+import           Data.ByteString.Builder ( lazyByteString )
 import qualified Data.ByteString.Lazy as LB
 import           Data.Conduit
 import qualified Data.List as L
@@ -32,9 +32,14 @@ import qualified Data.Text.Encoding as T
 import qualified Data.Text.Lazy.Encoding as TLE
 import           Data.Time.Calendar
 import           Data.Time.Clock
-import           Network.HTTP.StackClient (VerifiedDownloadException (..), Request, HttpException,
-                                           getResponseBody, httpLbs, mkDownloadRequest, parseRequest, parseUrlThrow,
-                                           setForceDownload, setGitHubHeaders, setRequestCheckStatus, verifiedDownloadWithProgress)
+import           Network.HTTP.StackClient
+                   ( HttpException (..), HttpExceptionContent (..)
+                   , Response (..), VerifiedDownloadException (..)
+                   , getResponseBody, httpLbs, mkDownloadRequest, parseRequest
+                   , parseUrlThrow, notFound404, setForceDownload
+                   , setGitHubHeaders, setRequestCheckStatus
+                   , verifiedDownloadWithProgress
+                   )
 import           Path
 import           Path.IO
 import           Stack.Constants
@@ -53,16 +58,11 @@ import           Text.ProjectTemplate
 -- "Stack.New" module.
 data NewException
     = FailedToLoadTemplate !TemplateName !FilePath
-    | FailedToDownloadTemplate !TemplateName !VerifiedDownloadException
-    | AlreadyExists !(Path Abs Dir)
-    | MissingParameters !PackageName !TemplateName !(Set String) !(Path Abs File)
     | InvalidTemplate !TemplateName !String
-    | AttemptedOverwrites [Path Abs File]
     | FailedToDownloadTemplatesHelp !HttpException
     | BadTemplatesHelpEncoding
         !String -- URL it's downloaded from
         !UnicodeException
-    | Can'tUseWiredInName !PackageName
     deriving Typeable
 
 instance Show NewException where
@@ -73,60 +73,12 @@ instance Show NewException where
         , " from "
         , path
         ]
-    show (FailedToDownloadTemplate name (DownloadHttpError httpError)) = concat
-        [ "Error: [S-1688]\n"
-        , "There was an unexpected HTTP error while downloading template "
-        , T.unpack (templateName name)
-        , ": "
-        , show httpError
-        ]
-    show (FailedToDownloadTemplate name _) = concat
-        [ "Error: [S-1688]\n"
-        , "Failed to download template "
-        , T.unpack (templateName name)
-        , ": unknown reason"
-        ]
-    show (AlreadyExists path) = concat
-        [ "Error: [S-2135]\n"
-        , "Directory "
-        , toFilePath path
-        , " already exists. Aborting."
-        ]
-    show (MissingParameters name template missingKeys userConfigPath) = unlines
-        [ "Error: [S-5515]"
-        , "The following parameters were needed by the template but not \
-          \provided: " <> L.intercalate ", " (S.toList missingKeys)
-        ,    "You can provide them in "
-          <> toFilePath userConfigPath
-          <> ", like this:"
-        , "templates:"
-        , "  params:"
-        , unlines $
-              map (\key -> "    " <> key <> ": value") (S.toList missingKeys)
-        , "Or you can pass each one as parameters like this:"
-        , concat
-            [ "stack new "
-            , packageNameString name
-            , " "
-            , T.unpack (templateName template)
-            , " "
-            , unwords $
-                map (\key -> "-p \"" <> key <> ":value\"") (S.toList missingKeys)
-            ]
-        ]
     show (InvalidTemplate name why) = concat
         [ "Error: [S-9490]\n"
         , "The template \""
         , T.unpack (templateName name)
         , "\" is invalid and could not be used. The error was: "
         , why
-        ]
-    show (AttemptedOverwrites fps) = concat
-        [ "Error: [S-3113]\n"
-        , "The template would create the following files, but they already \
-          \exist:\n"
-        , unlines (map (("  " ++) . toFilePath) fps)
-        , "Use '--force' to ignore this, and overwrite these files."
         ]
     show (FailedToDownloadTemplatesHelp ex) = concat
         [ "Error: [S-8143]\n"
@@ -140,15 +92,125 @@ instance Show NewException where
         , "\n\n"
         , show err
         ]
-    show (Can'tUseWiredInName name) = concat
-        [ "Error: [S-5682]\n"
-        , "The name \""
-        , packageNameString name
-        , "\" is used by GHC wired-in packages, and so shouldn't be used as a \
-          \package name."
-        ]
 
 instance Exception NewException
+
+-- | Type representing \'pretty\' exceptions thrown by functions exported by the
+-- "Stack.New" module.
+data NewPrettyException
+    = ProjectDirAlreadyExists !String !(Path Abs Dir)
+    | FailedToDownloadTemplate !Text !String !VerifiedDownloadException
+    | MagicPackageNameInvalid !String
+    | AttemptedOverwrites !Text [Path Abs File]
+    deriving Typeable
+
+-- | These exceptions are intended to be thrown only as \'pretty\' exceptions,
+-- so their \'show\' functions can be simple.
+instance Show NewPrettyException where
+    show (ProjectDirAlreadyExists {}) = "ProjectDirAlreadyExists"
+    show (FailedToDownloadTemplate {}) = "FailedToDownloadTemplate"
+    show (MagicPackageNameInvalid {}) = "MagicPackageNameInvalid"
+    show (AttemptedOverwrites {}) = "AttemptedOverwrites"
+
+instance Pretty NewPrettyException where
+    pretty (FailedToDownloadTemplate name url ex) =
+        "[S-1688]"
+        <> line
+        <> fillSep
+             [ flow "Stack failed to download the template"
+             , style Current (fromString . T.unpack $ name)
+             , "from"
+             , style Url (fromString url) <> "."
+             ]
+        <> blankLine
+        <> ( if isNotFound
+                then    flow "Please check that the template exists at that \
+                             \location."
+                     <> blankLine
+                else mempty
+           )
+        <> fillSep
+             [ flow "While downloading, Stack encountered"
+             , msg
+             ]
+      where
+        (msg, isNotFound) = case ex of
+            DownloadHttpError (HttpExceptionRequest req content) ->
+              let msg' =    flow "an HTTP exception. Stack made the request:"
+                         <> blankLine
+                         <> fromString (show req)
+                         <> blankLine
+                         <> flow "and the content of the exception was:"
+                         <> blankLine
+                         <> fromString (show content)
+                  isNotFound404 = case content of
+                                    StatusCodeException res _ ->
+                                      responseStatus res == notFound404
+                                    _ -> False
+              in  (msg', isNotFound404)
+            DownloadHttpError (InvalidUrlException url' reason) ->
+              let msg' = fillSep
+                           [ flow "an HTTP exception. The URL"
+                           , style Url (fromString url')
+                           , flow "was considered invalid because"
+                           , fromString reason <> "."
+                           ]
+              in (msg', False)
+            _ -> let msg' =    flow "the exception:"
+                            <> blankLine
+                            <> fromString (show ex)
+                 in (msg', False)
+    pretty (ProjectDirAlreadyExists name path) =
+        "[S-2135]"
+        <> line
+        <> fillSep
+             [ flow "Stack failed to create a new directory for project"
+             , style Current (fromString name) <> ","
+             , flow "as the directory"
+             , style Dir (pretty path)
+             , flow "already exists."
+             ]
+    pretty (MagicPackageNameInvalid name) =
+        "[S-5682]"
+        <> line
+        <> fillSep
+             [ flow "Stack declined to create a new directory for project"
+             , style Current (fromString name) <> ","
+             , flow "as package"
+             , fromString name
+             , flow "is 'wired-in' to a version of GHC. That can cause build \
+                    \errors."
+             ]
+        <> blankLine
+        <> fillSep
+             ( flow "The names blocked by Stack are:"
+             : prettyList Nothing
+                 ( map toStyleDoc (L.sort $ S.toList wiredInPackages)
+                 )
+             )
+      where
+        toStyleDoc :: PackageName -> StyleDoc
+        toStyleDoc = fromString . packageNameString
+    pretty (AttemptedOverwrites name fps) =
+        "[S-3113]"
+        <> line
+        <> fillSep
+             [ flow "Stack declined to apply the template"
+             , style Current (fromString . T.unpack $ name) <> ","
+             , flow "as it would create files that already exist."
+             ]
+        <> blankLine
+        <> flow "The template would create the following existing files:"
+        <> line
+        <> bulletedList (map (style File . pretty) fps)
+        <> blankLine
+        <> fillSep
+             [ "Use the"
+             , style Shell "--force"
+             , "flag to ignore this and overwrite those files."
+             ]
+
+instance Exception NewPrettyException
 
 --------------------------------------------------------------------------------
 -- Main project creation
@@ -169,10 +231,11 @@ data NewOpts = NewOpts
 new :: HasConfig env => NewOpts -> Bool -> RIO env (Path Abs Dir)
 new opts forceOverwrite = do
     when (newOptsProjectName opts `elem` wiredInPackages) $
-      throwM $ Can'tUseWiredInName (newOptsProjectName opts)
+      throwM $ PrettyException $
+        MagicPackageNameInvalid (packageNameString $ newOptsProjectName opts)
     pwd <- getCurrentDir
     absDir <- if bare then pure pwd
-                      else do relDir <- parseRelDir (packageNameString project)
+                      else do relDir <- parseRelDir projectName
                               liftM (pwd </>) (pure relDir)
     exists <- doesDirExist absDir
     configTemplate <- view $ configL.to configDefaultTemplate
@@ -180,7 +243,8 @@ new opts forceOverwrite = do
                                                         , configTemplate
                                                         ]
     if exists && not bare
-        then throwM (AlreadyExists absDir)
+        then throwM $ PrettyException $
+                 ProjectDirAlreadyExists projectName absDir
         else do
             templateText <- loadTemplate template (logUsing absDir template)
             files <-
@@ -190,27 +254,33 @@ new opts forceOverwrite = do
                     (newOptsNonceParams opts)
                     absDir
                     templateText
-            when (not forceOverwrite && bare) $ checkForOverwrite (M.keys files)
+            when (not forceOverwrite && bare) $
+                checkForOverwrite template (M.keys files)
             writeTemplateFiles files
             runTemplateInits absDir
             pure absDir
   where
     cliOptionTemplate = newOptsTemplate opts
     project = newOptsProjectName opts
+    projectName = packageNameString project
     bare = newOptsCreateBare opts
     logUsing absDir template templateFrom =
         let loading = case templateFrom of
-                          LocalTemp -> "Loading local"
+                          LocalTemp -> flow "Loading local"
                           RemoteTemp -> "Downloading"
-         in
-        logInfo
-            (loading <> " template \"" <> display (templateName template) <>
-             "\" to create project \"" <>
-             fromString (packageNameString project) <>
-             "\" in " <>
-             if bare then "the current directory"
-                     else fromString (toFilePath (dirname absDir)) <>
-             " ...")
+        in  prettyInfo
+              ( fillSep
+                  [ loading
+                  , "template"
+                  , style
+                      Current
+                      (fromString $ T.unpack $ templateName template)
+                  , flow "to create project"
+                  , style Current (fromString projectName)
+                  , flow "in directory"
+                  , style Dir (pretty $ dirname absDir) <> "..."
+                  ]
+                )
 
 data TemplateFrom = LocalTemp | RemoteTemp
 
@@ -223,7 +293,8 @@ loadTemplate
 loadTemplate name logIt = do
     templateDir <- view $ configL.to templatesDir
     case templatePath name of
-        AbsPath absFile -> logIt LocalTemp >> loadLocalFile absFile eitherByteStringToText
+        AbsPath absFile ->
+            logIt LocalTemp >> loadLocalFile absFile eitherByteStringToText
         UrlPath s -> do
             let settings = asIsFromUrl s
             downloadFromUrl settings templateDir
@@ -235,9 +306,9 @@ loadTemplate name logIt = do
                 (\(e :: NewException) -> do
                       case relSettings rawParam of
                         Just settings -> do
-                          req <- parseRequest (tplDownloadUrl settings)
-                          let extract = tplExtract settings
-                          downloadTemplate req extract (templateDir </> relFile)
+                          let url = tplDownloadUrl settings
+                              extract = tplExtract settings
+                          downloadTemplate url extract (templateDir </> relFile)
                         Nothing -> throwM e
                 )
         RepoPath rtp -> do
@@ -260,35 +331,48 @@ loadTemplate name logIt = do
                     Right template ->
                         pure template
             else throwM (FailedToLoadTemplate name (toFilePath path))
+
     relSettings :: String -> Maybe TemplateDownloadSettings
     relSettings req = do
         rtp <- parseRepoPathWithService defaultRepoService (T.pack req)
         pure (settingsFromRepoTemplatePath rtp)
+
     downloadFromUrl :: TemplateDownloadSettings -> Path Abs Dir -> RIO env Text
     downloadFromUrl settings templateDir = do
         let url = tplDownloadUrl settings
+            rel = fromMaybe backupUrlRelPath (parseRelFile url)
+        downloadTemplate url (tplExtract settings) (templateDir </> rel)
+
+    downloadTemplate
+        :: String
+        -> (ByteString -> Either String Text)
+        -> Path Abs File
+        -> RIO env Text
+    downloadTemplate url extract path = do
         req <- parseRequest url
-        let rel = fromMaybe backupUrlRelPath (parseRelFile url)
-        downloadTemplate req (tplExtract settings) (templateDir </> rel)
-    downloadTemplate :: Request -> (ByteString -> Either String Text) -> Path Abs File -> RIO env Text
-    downloadTemplate req extract path = do
         let dReq = setForceDownload True $ mkDownloadRequest (setRequestCheckStatus req)
         logIt RemoteTemp
         catch
           (void $ do
             verifiedDownloadWithProgress dReq path (T.pack $ toFilePath path) Nothing
           )
-          (useCachedVersionOrThrow path)
-
+          (useCachedVersionOrThrow path url)
         loadLocalFile path extract
-    useCachedVersionOrThrow :: Path Abs File -> VerifiedDownloadException -> RIO env ()
-    useCachedVersionOrThrow path exception = do
-      exists <- doesFileExist path
 
-      if exists
-        then do logWarn "Tried to download the template but an error was found."
-                logWarn "Using cached local version. It may not be the most recent version though."
-        else throwM (FailedToDownloadTemplate name exception)
+    useCachedVersionOrThrow
+        :: Path Abs File
+        -> String
+        -> VerifiedDownloadException
+        -> RIO env ()
+    useCachedVersionOrThrow path url exception = do
+        exists <- doesFileExist path
+        if exists
+            then do
+                logWarn "Tried to download the template but an error was found."
+                logWarn "Using cached local version. It may not be the most \
+                        \recent version though."
+            else throwM $ PrettyException $
+                     FailedToDownloadTemplate (templateName name) url exception
 
 data TemplateDownloadSettings = TemplateDownloadSettings
   { tplDownloadUrl :: String
@@ -394,13 +478,9 @@ applyTemplate project template nonceParams dir templateText = do
           pure (mks <> mks1 <> mks2, (dir </> path, bytes'))
 
     (missingKeys, results) <- mapAccumLM processFile S.empty (M.toList files)
-    unless (S.null missingKeys) $ do
-      let missingParameters = MissingParameters
-                               project
-                               template
-                               missingKeys
-                               (configUserConfigPath config)
-      logInfo ("\n" <> displayShow missingParameters <> "\n")
+    unless (S.null missingKeys) $
+      prettyNote $ missingParameters
+        project missingKeys (configUserConfigPath config)
     pure $ M.fromList results
   where
     onlyMissingKeys (Mustache.VariableNotFound ks) = map T.unpack ks
@@ -413,11 +493,68 @@ applyTemplate project template nonceParams dir templateText = do
       (a'', cs) <- mapAccumLM f a' xs
       pure (a'', c:cs)
 
+    missingParameters
+      :: PackageName
+      -> Set String
+      -> Path Abs File
+      -> StyleDoc
+    missingParameters name missingKeys userConfigPath =
+           fillSep
+             ( flow "The following parameters were needed by the template but \
+                    \not provided:"
+             : prettyList Nothing (map toStyleDoc (S.toList missingKeys))
+             )
+        <> blankLine
+        <> fillSep
+             [ flow "You can provide them in Stack's global YAML configuration \
+                    \file"
+             , "(" <> style File (pretty userConfigPath) <> ")"
+             , "like this:"
+             ]
+        <> blankLine
+        <> "templates:"
+        <> line
+        <> "  params:"
+        <> line
+        <> vsep
+             ( map
+                 (\key -> "    " <> fromString key <> ": value")
+                 (S.toList missingKeys)
+             )
+        <> blankLine
+        <> flow "Or you can pass each one on the command line as parameters \
+                \like this:"
+        <> blankLine
+        <> style Shell
+             ( fillSep
+                 [ flow "stack new"
+                 , fromString (packageNameString name)
+                 , fromString $ T.unpack (templateName template)
+                 , hsep $
+                     map
+                       ( \key ->
+                           fillSep [ "-p"
+                                   , "\"" <> fromString key <> ":value\""
+                                   ]
+                       )
+                       (S.toList missingKeys)
+                 ]
+             )
+        <> line
+      where
+        toStyleDoc :: String -> StyleDoc
+        toStyleDoc = fromString
+
 -- | Check if we're going to overwrite any existing files.
-checkForOverwrite :: (MonadIO m, MonadThrow m) => [Path Abs File] -> m ()
-checkForOverwrite files = do
+checkForOverwrite
+    :: (MonadIO m, MonadThrow m)
+    => TemplateName
+    -> [Path Abs File] -> m ()
+checkForOverwrite template files = do
     overwrites <- filterM doesFileExist files
-    unless (null overwrites) $ throwM (AttemptedOverwrites overwrites)
+    unless (null overwrites) $
+        throwM $ PrettyException $
+            AttemptedOverwrites (templateName template) overwrites
 
 -- | Write files to the new project directory.
 writeTemplateFiles

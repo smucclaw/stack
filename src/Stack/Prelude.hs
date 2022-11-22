@@ -28,7 +28,7 @@ module Stack.Prelude
   , bugPrettyReport
   , blankLine
   , module X
-  -- * Re-exports from the rio-pretty print package, and 'string'
+  -- * Re-exports from the rio-pretty print package, 'string' and 'prettyList'
   , HasStylesUpdate (..)
   , HasTerm (..)
   , Pretty (..)
@@ -47,6 +47,7 @@ module Stack.Prelude
   , flow
   , hang
   , hcat
+  , hsep
   , indent
   , line
   , logLevelToStyle
@@ -58,6 +59,7 @@ module Stack.Prelude
   , prettyInfo
   , prettyInfoL
   , prettyInfoS
+  , prettyList
   , prettyNote
   , prettyWarn
   , prettyWarnL
@@ -88,7 +90,7 @@ import           RIO.File as X hiding ( writeBinaryFileAtomic )
 import           RIO.PrettyPrint
                    ( HasStylesUpdate (..), HasTerm (..), Pretty (..), Style (..)
                    , StyleDoc, (<+>), align, bulletedList, debugBracket
-                   , encloseSep, fillSep, flow, hang, hcat, indent, line
+                   , encloseSep, fillSep, flow, hang, hcat, hsep, indent, line
                    , logLevelToStyle, parens, prettyDebugL, prettyError
                    , prettyErrorL, prettyInfo, prettyInfoL, prettyInfoS
                    , prettyNote, prettyWarn, prettyWarnL, prettyWarnS, punctuate
@@ -299,6 +301,26 @@ string "" = mempty
 string ('\n':s) = line <> string s
 string s        = let (xs, ys) = span (/='\n') s
                   in  fromString xs <> string ys
+
+-- | A helper function to yield a narrative list from a list of items, with a
+-- final fullstop. For example, helps produce the output
+-- @\"apple, ball and cat.\"@ from @[\"apple\", \"ball\", \"cat\"]@.
+prettyList :: Pretty a
+           => Maybe Style
+           -- ^ Style the items in the list?
+           -> [a]
+           -> [StyleDoc]
+prettyList _ [] = []
+prettyList mStyle [x] = [maybe id style mStyle (pretty x) <> "."]
+prettyList mStyle [x1, x2] =
+      mStyle' (pretty x1)
+    : "and"
+    : prettyList mStyle [x2]
+  where
+    mStyle' = maybe id style mStyle
+prettyList mStyle (x:xs) =
+      maybe id style mStyle (pretty x) <> ","
+    : prettyList mStyle xs
 
 -- | Report a bug in Stack.
 bugReport :: String -> String -> String

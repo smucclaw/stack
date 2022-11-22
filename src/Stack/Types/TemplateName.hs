@@ -27,13 +27,13 @@ import           Stack.Prelude
 -- | Type representing exceptions thrown by functions exported by the
 -- "Stack.Types.TemplateName" module.
 newtype TypeTemplateNameException
-    = DefaultTemplateNameNotParsedBug String
-    deriving Typeable
+  = DefaultTemplateNameNotParsedBug String
+  deriving Typeable
 
 instance Show TypeTemplateNameException where
-    show (DefaultTemplateNameNotParsedBug s) = bugReport "[S-7410]" $
-        "The impossible happened! Cannot parse default template name: "
-        ++ s
+  show (DefaultTemplateNameNotParsedBug s) = bugReport "[S-7410]" $
+    "The impossible happened! Cannot parse default template name: "
+    ++ s
 
 instance Exception TypeTemplateNameException
 
@@ -41,75 +41,76 @@ instance Exception TypeTemplateNameException
 data TemplateName = TemplateName !Text !TemplatePath
   deriving (Ord,Eq,Show)
 
-data TemplatePath = AbsPath (Path Abs File)
-                  -- ^ an absolute path on the filesystem
-                  | RelPath String (Path Rel File)
-                  -- ^ a relative path on the filesystem, or relative to
-                  -- the template repository. To avoid path separator conversion
-                  -- on Windows, the raw command-line parameter passed is also
-                  -- given as the first field (possibly with @.hsfiles@ appended).
-                  | UrlPath String
-                  -- ^ a full URL
-                  | RepoPath RepoTemplatePath
+data TemplatePath
+  = AbsPath (Path Abs File)
+    -- ^ An absolute path on the filesystem
+  | RelPath String (Path Rel File)
+    -- ^ A relative path on the filesystem, or relative to the template
+    -- repository. To avoid path separator conversion on Windows, the raw
+    -- command-line parameter passed is also given as the first field (possibly
+    -- with @.hsfiles@ appended).
+  | UrlPath String
+  -- ^ a full URL
+  | RepoPath RepoTemplatePath
   deriving (Eq, Ord, Show)
 
 -- | Details for how to access a template from a remote repo.
 data RepoTemplatePath = RepoTemplatePath
-    { rtpService  :: RepoService
-    , rtpUser     :: Text
-    , rtpTemplate :: Text
-    }
-    deriving (Eq, Ord, Show)
+  { rtpService  :: RepoService
+  , rtpUser     :: Text
+  , rtpTemplate :: Text
+  }
+  deriving (Eq, Ord, Show)
 
 -- | Services from which templates can be retrieved from a repository.
 data RepoService = GitHub | GitLab | Bitbucket
-    deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show)
 
 instance FromJSON TemplateName where
-    parseJSON = withText "TemplateName" $
-        either fail pure . parseTemplateNameFromString . T.unpack
+  parseJSON = withText "TemplateName" $
+                either fail pure . parseTemplateNameFromString . T.unpack
 
 -- | An argument which accepts a template name of the format
 -- @foo.hsfiles@ or @foo@, ultimately normalized to @foo@.
 templateNameArgument :: O.Mod O.ArgumentFields TemplateName
                      -> O.Parser TemplateName
 templateNameArgument =
-    O.argument
-        (do s <- O.str
-            either O.readerError pure (parseTemplateNameFromString s))
+  O.argument
+    (do s <- O.str
+        either O.readerError pure (parseTemplateNameFromString s))
 
 -- | An argument which accepts a @key:value@ pair for specifying parameters.
 templateParamArgument :: O.Mod O.OptionFields (Text,Text)
                       -> O.Parser (Text,Text)
 templateParamArgument =
-    O.option
-        (do s <- O.str
-            either O.readerError pure (parsePair s))
-  where
-    parsePair :: String -> Either String (Text, Text)
-    parsePair s =
-        case break (==':') s of
-            (key,':':value@(_:_)) -> Right (T.pack key, T.pack value)
-            _ -> Left ("Expected key:value format for argument: " <> s)
+  O.option
+    (do s <- O.str
+        either O.readerError pure (parsePair s))
+ where
+  parsePair :: String -> Either String (Text, Text)
+  parsePair s =
+    case break (==':') s of
+      (key,':':value@(_:_)) -> Right (T.pack key, T.pack value)
+      _ -> Left ("Expected key:value format for argument: " <> s)
 
 -- | Parse a template name from a string.
 parseTemplateNameFromString :: String -> Either String TemplateName
 parseTemplateNameFromString fname =
-    case T.stripSuffix ".hsfiles" (T.pack fname) of
-        Nothing -> parseValidFile (T.pack fname) (fname <> ".hsfiles") fname
-        Just prefix -> parseValidFile prefix fname fname
-  where
-    parseValidFile prefix hsf orig = maybe (Left expected) Right
-                                           $ asum (validParses prefix hsf orig)
-    validParses prefix hsf orig =
-        -- NOTE: order is important
-        [ TemplateName prefix        . RepoPath <$> parseRepoPath hsf
-        , TemplateName (T.pack orig) . UrlPath <$> (parseRequest orig *> Just orig)
-        , TemplateName prefix        . AbsPath <$> parseAbsFile hsf
-        , TemplateName prefix        . RelPath hsf <$> parseRelFile hsf
-        ]
-    expected = "Expected a template like: foo or foo.hsfiles or\
-               \ https://example.com/foo.hsfiles or github:user/foo"
+  case T.stripSuffix ".hsfiles" (T.pack fname) of
+    Nothing -> parseValidFile (T.pack fname) (fname <> ".hsfiles") fname
+    Just prefix -> parseValidFile prefix fname fname
+ where
+  parseValidFile prefix hsf orig = maybe (Left expected) Right
+                                         $ asum (validParses prefix hsf orig)
+  validParses prefix hsf orig =
+      -- NOTE: order is important
+      [ TemplateName prefix        . RepoPath <$> parseRepoPath hsf
+      , TemplateName (T.pack orig) . UrlPath <$> (parseRequest orig *> Just orig)
+      , TemplateName prefix        . AbsPath <$> parseAbsFile hsf
+      , TemplateName prefix        . RelPath hsf <$> parseRelFile hsf
+      ]
+  expected = "Expected a template like: foo or foo.hsfiles or\
+             \ https://example.com/foo.hsfiles or github:user/foo"
 
 -- | The default template name you can use if you don't have one.
 defaultTemplateName :: TemplateName
