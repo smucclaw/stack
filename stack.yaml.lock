@@ -5,12 +5,27 @@
 
 packages:
 - completed:
-    hackage: pantry-0.8.0@sha256:351a9103c0b1dd78f6b8f243ca4fc6a6952d5ba00f72032b831e5ee0e61dce0f,4099
+    commit: beef09faa9fac949be56766a6de788d4cb948115
+    git: https://github.com/sol/hpack
+    name: hpack
     pantry-tree:
-      sha256: a5f0a90f33a78e3c92f3c13335f870fe83f20c45296cda9c279042b7c451a310
-      size: 2524
+      sha256: 77a0e107e2c263971811f9230835212b3ae6a45777148fa4c6c3a7f24ab482a4
+      size: 4379
+    version: 0.35.0
   original:
-    hackage: pantry-0.8.0@sha256:351a9103c0b1dd78f6b8f243ca4fc6a6952d5ba00f72032b831e5ee0e61dce0f,4099
+    commit: beef09faa9fac949be56766a6de788d4cb948115
+    git: https://github.com/sol/hpack
+- completed:
+    commit: ec2048adfaf785e94a8744239bdb9878a99751a6
+    git: https://github.com/commercialhaskell/pantry/
+    name: pantry
+    pantry-tree:
+      sha256: b14490e2daeb4bafb2b9c9d136ea25087467936bd9e752d0e92edb95b485a187
+      size: 3674
+    version: 0.8.0
+  original:
+    commit: ec2048adfaf785e94a8744239bdb9878a99751a6
+    git: https://github.com/commercialhaskell/pantry/
 - completed:
     hackage: rio-prettyprint-0.1.4.0@sha256:1f8eb3ead0ef33d3736d53e1de5e9b2c91a0c207cdca23321bd74c401e85f23a,1301
     pantry-tree:
