@@ -399,13 +399,14 @@ checkSubLibraryDependencies proj = do
                        maybe [] C.condTreeConstraints lib
         libraries = concatMap (toList . depLibraries) dependencies
 
-    when (subLibDepExist libraries)
-      (logWarn "SubLibrary dependency is not supported, this will almost certainly fail")
+    unless (null $ subLibDepExist libraries)
+      (logWarn $ "SubLibrary dependency is not supported, this will almost certainly fail: " <>
+        fromString (show (subLibDepExist libraries)))
   where
     getDeps (_, C.CondNode _ dep _) = dep
     subLibDepExist lib =
-      any (\x ->
+      mapMaybe (\x ->
         case x of
-          C.LSubLibName _ -> True
-          C.LMainLibName  -> False
+          C.LSubLibName sl -> Just sl
+          C.LMainLibName   -> Nothing
       ) lib
